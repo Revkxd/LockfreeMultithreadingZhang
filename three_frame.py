@@ -20,7 +20,10 @@ CODON_TABLE = {
 }
 
 def translate_codon(codon):
-    return CODON_TABLE[codon.upper()] if len(codon) == 3 else 'F'
+    return CODON_TABLE[codon.upper()] if len(codon) == 3 else 'FAIL'
+
+def get_score(scoring, dna, protein, i, j):
+    return scoring[translate_codon(dna[i-1:i+2])][protein[j-1]] if translate_codon(dna[i-1:i+2]) != 'FAIL' else -999
 
 def three_frame(dna_input, protein_input):
     N, M = len(dna_input), len(protein_input)
@@ -44,15 +47,15 @@ def three_frame(dna_input, protein_input):
         C[j][0] = D[j][0]
         C[1][j] = max(I[1][j],
                       D[1][j],
-                      C[0][j-1] + scoring[translate_codon(dna_input[1-1:1+2])][protein_input[j-1]])
+                      C[0][j-1] + get_score(scoring, dna_input, protein_input, 1, j))
         C[2][j] = max(I[2][j],
-                      C[0][j-1] + scoring[translate_codon(dna_input[2-1:2+2])][protein_input[j-1]] - frameshift_penalty)
+                      C[0][j-1] + get_score(scoring, dna_input, protein_input, 2, j) - frameshift_penalty)
         C[3][j] = max(I[3][j],
-                      C[1][j-1] + scoring[translate_codon(dna_input[3-1:3+2])][protein_input[j-1]] - frameshift_penalty)
+                      C[1][j-1] + get_score(scoring, dna_input, protein_input, 3, j) - frameshift_penalty)
         C[4][j] = max(I[4][j],
                       D[4][j],
-                      C[1][j-1] + scoring[translate_codon(dna_input[4-1:4+2])][protein_input[j-1]],
-                      C[2][j-1] + scoring[translate_codon(dna_input[4-1:4+2])][protein_input[j-1]] - frameshift_penalty)
+                      C[1][j-1] + get_score(scoring, dna_input, protein_input, 4, j),
+                      C[2][j-1] + get_score(scoring, dna_input, protein_input, 4, j) - frameshift_penalty)
 
     # Matrix filling
     for i in range(N):
@@ -62,9 +65,9 @@ def three_frame(dna_input, protein_input):
             D[i][j] = max(D[i-3][j] - gep, C[i-3][j] - gop - gep)
             C[i][j] = max(I[i][j],
                           D[i][j],
-                          C[i-2][j-1] + scoring[translate_codon(dna_input[i-1:i+2])][protein_input[j-1]] - frameshift_penalty,
-                          C[i-3][j-1] + scoring[translate_codon(dna_input[i-1:i+2])][protein_input[j-1]],
-                          C[i-4][j-1] + scoring[translate_codon(dna_input[i-1:i+2])][protein_input[j-1]] - frameshift_penalty)
+                          C[i-2][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty,
+                          C[i-3][j-1] + get_score(scoring, dna_input, protein_input, i, j),
+                          C[i-4][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty)
             if i == N and j == M:
                 # Note: -1 in index is to account for 0-indexing
                 C[N-1][M] = max(C[N-1-1][M],
