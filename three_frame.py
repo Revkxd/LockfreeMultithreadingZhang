@@ -27,8 +27,8 @@ def get_score(scoring, dna, protein, i, j):
 
 def three_frame(dna_input, protein_input):
     N, M = len(dna_input), len(protein_input)
-    gep, gop = -2, -1
-    frameshift_penalty = -1
+    gep, gop = 2, 1
+    frameshift_penalty = 1
     I = [[0 for col in range(M+1)] for row in range(N)]
     D = [[0 for col in range(M+1)] for row in range(N)]
     C = [[0 for col in range(M+1)] for row in range(N)]
