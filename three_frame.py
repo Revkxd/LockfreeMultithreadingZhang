@@ -20,7 +20,7 @@ CODON_TABLE = {
 }
 
 def translate_codon(codon):
-    return CODON_TABLE[codon.upper()] if len(codon) == 3 else 'FAIL'
+    return CODON_TABLE.get(codon, 'FAIL')
 
 def get_score(scoring, dna, protein, i, j):
     return scoring[translate_codon(dna[i-1:i+2])][protein[j-1]] if translate_codon(dna[i-1:i+2]) != 'FAIL' else -999
@@ -35,14 +35,14 @@ def three_frame(dna_input, protein_input):
     scoring = bl.BLOSUM(62, default=0)
 
     # Initialization
-    for j in range(M):
+    for j in range(M+1):
         I[j][0] = float('-inf')
         D[0][j] = D[2][j] = D[3][j] = float('-inf')
         D[1][j] = C[0][j] - gop - gep
 
     # C(0, 0) already zero
     # Note: Placed j-1 for accessing protein_input since index out of bounds error
-    for j in range(1, M):
+    for j in range(1, M+1):
         C[0][j] = I[0][j]
         C[j][0] = D[j][0]
         C[1][j] = max(I[1][j],
@@ -59,7 +59,7 @@ def three_frame(dna_input, protein_input):
 
     # Matrix filling
     for i in range(N):
-        for j in range(1, M):
+        for j in range(1, M+1):
             I[i][j] = max(I[i][j-1] - gep, C[i][j-1] - gop - gep)
             if i < 4: continue
             D[i][j] = max(D[i-3][j] - gep, C[i-3][j] - gop - gep)
@@ -68,7 +68,7 @@ def three_frame(dna_input, protein_input):
                           C[i-2][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty,
                           C[i-3][j-1] + get_score(scoring, dna_input, protein_input, i, j),
                           C[i-4][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty)
-            if i == N and j == M:
+            if i == N-1 and j == M:
                 # Note: -1 in index is to account for 0-indexing
                 C[N-1][M] = max(C[N-1-1][M],
                                 C[N-2-1][M] - frameshift_penalty,
@@ -78,8 +78,8 @@ def three_frame(dna_input, protein_input):
     return C, C[N-1][M]
 
 if __name__ == '__main__':
-    dna_inputs = ['ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
-    protein_inputs = ['MRIR', 'LGPL']
+    dna_inputs = ['ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
+    protein_inputs = ['MR', 'MRIR', 'LGPL']
     # thing = bl.BLOSUM(62, default=0)[translate_codon(dna_input[0:3])][protein_input[1]]
     # print(thing)
 
