@@ -27,7 +27,6 @@ def get_score(scoring, dna, protein, i, j):
 
 def matrix_printer(matrices: list[list]):
     for matrix in matrices:
-        print(matrix)
         for row in matrix:
             print(row)
         print()
@@ -104,7 +103,7 @@ def modded_three_frame(dna_input, protein_input):
             elif C[i][j] == C[i-3][j-1] + get_score(scoring, dna_input, protein_input, i, j): TC[i][j] = 3
             elif C[i][j] == C[i-4][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty: TC[i][j] = 4
 
-    matrix_printer([I, D, C])
+    matrix_printer([I, D, C, TI, TD, TC])
     return C
 
 def reverse(seq):
@@ -135,6 +134,7 @@ def reverse_complement(seq):
 
 def six_frame(dna_input, protein_input):
     C1 = modded_three_frame(dna_input, protein_input)
+    print("\n\n")
     C2 = modded_three_frame(reverse_complement(dna_input), protein_input)
 
     return max(max(max(C1)), max(max(C2)))
