@@ -25,6 +25,12 @@ def translate_codon(codon):
 def get_score(scoring, dna, protein, i, j):
     return scoring[translate_codon(dna[i-1:i+2])][protein[j-1]] if translate_codon(dna[i-1:i+2]) != 'FAIL' else -999
 
+def matrix_printer(matrices: list[list]):
+    for matrix in matrices:
+        for row in matrix:
+            print(row)
+        print()
+
 def three_frame(dna_input, protein_input):
     N, M = len(dna_input), len(protein_input)
     gep, gop = 2, 3
@@ -75,7 +81,8 @@ def three_frame(dna_input, protein_input):
                                 C[N-3-1][M] - gop - gep - frameshift_penalty,
                                 C[N-4-1][M] - frameshift_penalty - gep)
 
-    return C, C[N-1][M]
+    matrix_printer([I, D, C])
+    return C[N-1][M]
 
 if __name__ == '__main__':
     dna_inputs = ['ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
@@ -84,7 +91,5 @@ if __name__ == '__main__':
     # print(thing)
 
     for dna_input, protein_input in zip(dna_inputs, protein_inputs):
-        matr, ans = three_frame(dna_input, protein_input)
-        for row in matr:
-            print(row)
+        ans = three_frame(dna_input, protein_input)
         print(f'Score: {ans}\n')
