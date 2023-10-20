@@ -1,5 +1,6 @@
 import blosum as bl
 
+flatten_list = lambda y:[x for a in y for x in flatten_list(a)] if type(y) is list else [y]
 CODON_TABLE = {
     "TTT" : "F", "TTC" : "F", "TTA" : "L", "TTG" : "L",
     "CTT" : "L", "CTC" : "L", "CTA" : "L", "CTG" : "L",
@@ -137,7 +138,7 @@ def six_frame(dna_input, protein_input):
     print("\n\n")
     C2 = modded_three_frame(reverse_complement(dna_input), protein_input)
 
-    return max(max(max(C1)), max(max(C2)))
+    return max(max(flatten_list(C1)), max(flatten_list(C2)))
 
 if __name__ == '__main__':
     dna_inputs = ['ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
