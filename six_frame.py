@@ -148,5 +148,5 @@ if __name__ == '__main__':
 
     for dna_input, protein_input in zip(dna_inputs, protein_inputs):
         ans = six_frame(dna_input, protein_input)
-        print(f'Score: {ans}\n')
-        break
+        print(f'Score: {ans}')
+        print('-' * 50)
