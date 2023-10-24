@@ -141,8 +141,8 @@ def six_frame(dna_input, protein_input):
     return max(max(flatten_list(C1)), max(flatten_list(C2)))
 
 if __name__ == '__main__':
-    dna_inputs = ['ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
-    protein_inputs = ['MR', 'MRIR', 'LGPL']
+    dna_inputs = ['ATGCG', 'ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
+    protein_inputs = ['MCA', 'MR', 'MRIR', 'LGPL']
     # thing = bl.BLOSUM(62, default=0)[translate_codon(dna_input[0:3])][protein_input[1]]
     # print(thing)
 
@@ -150,3 +150,4 @@ if __name__ == '__main__':
         ans = six_frame(dna_input, protein_input)
         print(f'Score: {ans}')
         print('-' * 50)
+        break

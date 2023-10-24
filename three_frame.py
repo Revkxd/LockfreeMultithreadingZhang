@@ -85,11 +85,12 @@ def three_frame(dna_input, protein_input):
     return C[N-1][M]
 
 if __name__ == '__main__':
-    dna_inputs = ['ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
-    protein_inputs = ['MR', 'MRIR', 'LGPL']
+    dna_inputs = ['CTGGTGATG', 'ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
+    protein_inputs = ['LVM', 'MR', 'MRIR', 'LGPL']
     # thing = bl.BLOSUM(62, default=0)[translate_codon(dna_input[0:3])][protein_input[1]]
     # print(thing)
 
     for dna_input, protein_input in zip(dna_inputs, protein_inputs):
         ans = three_frame(dna_input, protein_input)
         print(f'Score: {ans}\n')
+        break
