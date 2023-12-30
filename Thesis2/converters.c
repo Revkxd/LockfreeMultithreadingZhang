@@ -30,6 +30,7 @@ int letter_to_blosum_index(char letter) {
         case 'Z': return 21;
         case 'X': return 22;
         case '*': return 23;
+        default: return -1;
     }
 }
 

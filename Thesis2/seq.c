@@ -1,5 +1,8 @@
 #include "converters.c"
 
+#define PRINTERS 1
+// #undef PRINTERS
+
 void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen(proteinSequence) + 1]) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int gep = 2, gop = 3, frameshift_penalty = 4;
@@ -107,7 +110,7 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
     }
 
     // Print the matrices for debugging
-    #ifdef DEBUG
+    #ifdef PRINTERS
     printf("I Matrix:\n");
     print_matrix(N, M + 1, I);
     printf("D Matrix:\n");
@@ -126,12 +129,12 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
 int six_frame(char* dnaSequence, char* proteinSequence) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int C1[N][M + 1], C2[N][M + 1];
-    #ifdef DEBUG
+    #ifdef PRINTERS
     printf("First Run:\n");
     #endif
     modded_three_frame(dnaSequence, proteinSequence, C1);
 
-    #ifdef DEBUG
+    #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
     reverse_complement(dnaSequence);
