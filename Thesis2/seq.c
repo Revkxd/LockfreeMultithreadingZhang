@@ -160,10 +160,15 @@ int main() {
     String dnaSequences[] = {"ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
     String proteinSequences[] = {"MCA", "MR", "MRIR", "LGPL"};
     int i;
+    double time_taken, start, end;
     for(i = 0; i < 4; i++) {
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
+        start = clock();
         printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
+        end = clock();
+        time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+        printf("Run %d time taken: %f ms\n\n", i, time_taken);
         // break;
     }
     return 0;

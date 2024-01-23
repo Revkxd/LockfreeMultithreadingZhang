@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
+#include <time.h>
 
 #define CODON_TABLE_SIZE 64
 #define CODON_LENGTH 3
