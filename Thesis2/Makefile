@@ -1,13 +1,16 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = 
 
-TARGET = seq
-EXE_NAME = run_seq
+SEQ = seq
+HTSEQ = htseq
 
-all: $(TARGET)
+all: seq htseq
 
-$(TARGET): $(TARGET).c
-	$(CC) $(CFLAGS) $(TARGET).c -o $(EXE_NAME)
+seq: $(SEQ).c
+	$(CC) $(CFLAGS) $(SEQ).c -o $(SEQ)
+
+htseq: $(HTSEQ).c
+	$(CC) $(CFLAGS) $(HTSEQ).c -o $(HTSEQ)
 
 clean:
-	rm -f $(EXE_NAME)
+	rm -f *.exe $(SEQ) $(HTSEQ)
