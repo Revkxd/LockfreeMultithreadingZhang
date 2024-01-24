@@ -1,5 +1,16 @@
-#include "converters.c"
-#include "../Lockfree/ht.h"
+// #define HTSEQ
+#ifdef HTSEQ
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
+#include <time.h>
+
+#include "constants.h"
+#include "converters.h"
+#include "maxfunctions.h"
+#include "./include/ht.h"
 
 #define PRINTERS 1
 // #undef PRINTERS
@@ -324,3 +335,4 @@ int main() {
     }
     return 0;
 }
+#endif

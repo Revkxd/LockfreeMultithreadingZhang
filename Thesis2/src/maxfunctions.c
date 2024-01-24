@@ -1,4 +1,5 @@
-#include<stdio.h>
+#include <stdio.h>
+#include "maxfunctions.h"
 
 int max_of_two(int a, int b) {
     return a > b ? a : b;

@@ -1,5 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
+#include <time.h>
+
 #include "constants.h"
-#include "maxfunctions.c"
+#include "converters.h"
+#include "tables.h"
 
 #define DEBUG 1
 #undef DEBUG

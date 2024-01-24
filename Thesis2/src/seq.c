@@ -1,4 +1,15 @@
-#include "converters.c"
+#define SEQ
+#ifdef SEQ
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
+#include <time.h>
+
+#include "constants.h"
+#include "converters.h"
+#include "maxfunctions.h"
 
 #define PRINTERS 1
 // #undef PRINTERS
@@ -173,3 +184,4 @@ int main() {
     }
     return 0;
 }
+#endif

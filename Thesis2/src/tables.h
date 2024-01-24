@@ -1,22 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <math.h>
-#include <time.h>
+#include "constants.h"
 
-#define CODON_TABLE_SIZE 64
-#define CODON_LENGTH 3
-#define NUM_AMINO_ACIDS 26
-#define STRING_MAX 400
-
-typedef struct {
-    char codon[4];
-    char amino_acid;
-} CodonEntry;
-
-typedef char String[STRING_MAX];
-
+#pragma once
 CodonEntry CODON_TABLE[CODON_TABLE_SIZE]= {
     {"TTT", 'F'}, {"TTC", 'F'}, {"TTA", 'L'}, {"TTG", 'L'},
     {"CTT", 'L'}, {"CTC", 'L'}, {"CTA", 'L'}, {"CTG", 'L'},
