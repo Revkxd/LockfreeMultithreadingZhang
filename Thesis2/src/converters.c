@@ -74,10 +74,12 @@ char get_translated_codon(char* dnaSequence, int index) {
 }
 
 int get_score(char amino_acid1, char amino_acid2) {
-    if(amino_acid1 == '0' || amino_acid2 == '0')
+    if(amino_acid1 == '-' || amino_acid2 == '-')
         return -999;
     int index1 = letter_to_blosum_index(amino_acid1);
     int index2 = letter_to_blosum_index(amino_acid2);
+    if(index1 == -1 || index2 == -1)
+        return -999;
     return BLOSUM62[index1][index2];
 }
 
