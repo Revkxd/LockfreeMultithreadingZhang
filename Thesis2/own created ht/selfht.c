@@ -36,7 +36,18 @@ void print_table() {
         }
     }
     printf("-------------------\n");
+}
 
+void print_table_to_file(FILE *fp) {
+    fprintf(fp, "Hash Table\n-------------------\n");
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (hash_table[i] == NULL) {
+            fprintf(fp, "\t%i\t---\n", i);
+        } else {
+            fprintf(fp, "\t%i\t%i\n", i, hash_table[i]->value);
+        }
+    }
+    fprintf(fp, "-------------------\n");
 }
 
 void print_entry(entry_t *entry) {
