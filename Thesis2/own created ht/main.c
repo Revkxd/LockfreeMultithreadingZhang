@@ -15,6 +15,8 @@
 #define PRINTERS 1
 #undef PRINTERS
 
+int reversed = 0;
+
 void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen(proteinSequence) + 1]) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int gep = 2, gop = 3, frameshift_penalty = 4;
@@ -84,8 +86,16 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
         }
     }
 
+    char filename[50];
+    char letter;
     // Matrix Filling
     for(i = 0; i < N; i++) {
+        letter = 'A' + i;
+        strcpy(filename, &letter);
+        if (reversed)
+            strcat(filename, &letter);
+        strcat(filename, ".txt");
+        FILE *fp = fopen(filename, "w");
         for(j = 1; j < M + 1; j++) {
             if(!ht_search(i, j, 1, &I[i][j])) {
                 I[i][j] = max_of_two(I[i][j-1] - gep, C[i][j-1] - gop - gep);
@@ -108,10 +118,18 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
                 ht_insert(i, j, 3, C[i][j]);
             }
         }
+        print_table_to_file(fp);
+        fclose(fp);
     }
 
     // Traceback Matrix Filling
     for(i = 0; i < N; i++) {
+        letter = 'A' + i;
+        strcpy(filename, &letter);
+        if (reversed)
+            strcat(filename, &letter);
+        strcat(filename, "_traceback.txt");
+        FILE *fp = fopen(filename, "w");
         for(j = 0; j < M; j++) {
             if(!ht_search(i, j, 4, &TI[i][j])) {
                 TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
@@ -137,6 +155,8 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
                 ht_insert(i, j, 6, TC[i][j]);
             }
         }
+        print_table_to_file(fp);
+        fclose(fp);
     }
 
     // Print the matrices for debugging
@@ -162,11 +182,13 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     #ifdef PRINTERS
     printf("First Run:\n");
     #endif
+    reversed = 0;
     modded_three_frame(dnaSequence, proteinSequence, C1);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
+    reversed = 1;
     reverse_complement(dnaSequence);
     modded_three_frame(dnaSequence, proteinSequence, C2);
 
@@ -187,11 +209,11 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 }
 
 int main() {
-    String dnaSequences[] = {"ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
-    String proteinSequences[] = {"MCA", "MR", "MRIR", "LGPL"};
+    String dnaSequences[] = {"AGTGTAGTGCCCTCTAGTTCA","ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
+    String proteinSequences[] = {"TVS-PGS", "MCA", "MR", "MRIR", "LGPL"};
     int i;
     double time_taken, start, end;
-    for(i = 0; i < 4; i++) {
+    for(i = 0; i < 5; i++) {
         init_hash_table();
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
