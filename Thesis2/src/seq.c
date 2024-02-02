@@ -1,4 +1,4 @@
-#define SEQ
+// #define SEQ
 #ifdef SEQ
 #include <stdio.h>
 #include <stdlib.h>
