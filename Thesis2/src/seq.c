@@ -1,4 +1,4 @@
-// #define SEQ
+#define SEQ
 #ifdef SEQ
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include "maxfunctions.h"
 
 #define PRINTERS 1
-// #undef PRINTERS
+#undef PRINTERS
 
 void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen(proteinSequence) + 1]) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
@@ -168,11 +168,11 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 }
 
 int main() {
-    String dnaSequences[] = {"ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
-    String proteinSequences[] = {"MCA", "MR", "MRIR", "LGPL"};
+    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT","ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
+    String proteinSequences[] = {"IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "MCA", "MR", "MRIR", "LGPL"};
     int i;
     double time_taken, start, end;
-    for(i = 0; i < 4; i++) {
+    for(i = 0; i < 2; i++) {
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
         start = clock();
