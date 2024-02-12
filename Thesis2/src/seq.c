@@ -14,10 +14,10 @@
 #define PRINTERS 1
 #undef PRINTERS
 
-void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen(proteinSequence) + 1]) {
+int modded_three_frame(char* dnaSequence, char* proteinSequence) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int gep = 2, gop = 3, frameshift_penalty = 4;
-    int I[N][M + 1], D[N][M + 1];
+    int I[N][M + 1], D[N][M + 1], C[N][M+1];
     int TI[N][M + 1], TD[N][M + 1], TC[N][M + 1];
     int i,j;
 
@@ -135,44 +135,41 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
     printf("TC Matrix:\n");
     print_matrix(N, M + 1, TC);
     #endif
+
+    int max_val = -999;
+    for(i = 0; i < N; i++) {
+        for(j = 0; j < M + 1; j++) {
+            max_val = C[i][j] > max_val ? C[i][j] : max_val;
+        }
+    }
+    
+    return max_val;
 }
 
 int six_frame(char* dnaSequence, char* proteinSequence) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int C1[N][M + 1], C2[N][M + 1];
+    int max1, max2;
     #ifdef PRINTERS
     printf("First Run:\n");
     #endif
-    modded_three_frame(dnaSequence, proteinSequence, C1);
+    max1 = modded_three_frame(dnaSequence, proteinSequence);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
     reverse_complement(dnaSequence);
-    modded_three_frame(dnaSequence, proteinSequence, C2);
-
-    int max1 = -999, max2 = -999;
-    int val1, val2;
-    int i, j;
-    for(i = 0; i < strlen(dnaSequence); i++) {
-        for(j = 0; j < strlen(proteinSequence) + 1; j++) {
-            val1 = C1[i][j];
-            val2 = C2[i][j];
-
-            max1 = val1 > max1 ? val1 : max1;
-            max2 = val2 > max2 ? val2 : max2;
-        }
-    }
+    max2 = modded_three_frame(dnaSequence, proteinSequence);
 
     return max_of_two(max1, max2);
 }
 
 int main() {
-    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
-    String proteinSequences[] = {"IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
+    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGC","ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
+    String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    for(i = 0; i < 2; i++) {
+    for(i = 0; i < 5; i++) {
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
         start = clock();

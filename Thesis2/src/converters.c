@@ -43,7 +43,7 @@ int letter_to_blosum_index(char letter) {
 }
 
 char* get_codon(char* dnaSequence, int index) {
-    char* codon = malloc(CODON_LENGTH + 1);
+    char* codon = (char*) malloc(CODON_LENGTH + 1);
     strncpy(codon, dnaSequence + index, CODON_LENGTH);
     codon[CODON_LENGTH] = '\0';
     return codon;
