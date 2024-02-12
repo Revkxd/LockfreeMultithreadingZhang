@@ -88,16 +88,20 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
         }
     }
 
+    #ifdef FILE_TRACE
     char filename[50];
     char letter;
+    #endif
     // Matrix Filling
     for(i = 0; i < N; i++) {
+        #ifdef FILE_TRACE
         letter = 'A' + i;
         strcpy(filename, &letter);
         if (reversed)
             strcat(filename, &letter);
         strcat(filename, ".txt");
         FILE *fp = fopen(filename, "w");
+        #endif
         for(j = 1; j < M + 1; j++) {
             if(!ht_search(i, j, 1, &I[i][j], hash_table)) {
                 I[i][j] = max_of_two(I[i][j-1] - gep, C[i][j-1] - gop - gep);
@@ -120,18 +124,22 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
                 ht_insert(i, j, 3, C[i][j], hash_table);
             }
         }
+        #ifdef FILE_TRACE
         print_table_to_file(fp, hash_table);
         fclose(fp);
+        #endif
     }
 
     // Traceback Matrix Filling
     for(i = 0; i < N; i++) {
+        #ifdef FILE_TRACE
         letter = 'A' + i;
         strcpy(filename, &letter);
         if (reversed)
             strcat(filename, &letter);
         strcat(filename, "_traceback.txt");
         FILE *fp = fopen(filename, "w");
+        #endif
         for(j = 0; j < M; j++) {
             if(!ht_search(i, j, 4, &TI[i][j], hash_table)) {
                 TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
@@ -157,8 +165,10 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, int C[][strlen
                 ht_insert(i, j, 6, TC[i][j], hash_table);
             }
         }
+        #ifdef FILE_TRACE
         print_table_to_file(fp, hash_table);
         fclose(fp);
+        #endif
     }
 
     // Print the matrices for debugging
@@ -211,11 +221,11 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 }
 
 int main() {
-    String dnaSequences[] = {"AGTGTAGTGCCCTCTAGTTCA","ATGCG", "ATGCGA", "ATGCGATACGCTTGA", "CTTGGTCCGAAT"};
-    String proteinSequences[] = {"TVS-PGS", "MCA", "MR", "MRIR", "LGPL"};
+    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
+    String proteinSequences[] = {"IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    for(i = 3; i < 5; i++) {
+    for(i = 0; i < 4; i++) {
         init_hash_table(orig_ht);
         init_hash_table(reverse_ht);
         printf("DNA Sequence: %s\n", dnaSequences[i]);
@@ -225,7 +235,7 @@ int main() {
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
         printf("Run %d time taken: %f ms\n\n", i, time_taken);
-        break;
+        // break;
     }
     return 0;
 }

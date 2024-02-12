@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#define TABLE_SIZE 500
+#define TABLE_SIZE 500000
 
 typedef struct {
     int i;
