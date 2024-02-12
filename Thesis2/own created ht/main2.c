@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "../src/constants.h"
 #include "../src/converters.c"
