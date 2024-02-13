@@ -13,8 +13,10 @@
 #include "../src/maxfunctions.c"
 #include "selfht2.c"
 
+#define NUM_INSTANCES 10
 #define PRINTERS 1
 #undef PRINTERS
+#define THREADING 1
 
 int reversed = 0;
 entry_t *orig_ht[TABLE_SIZE];
@@ -26,6 +28,15 @@ typedef struct {
     entry_t **hash_table;
     int *max_val;
 } thread_data;
+
+typedef struct {
+    int thread_no;
+    char *dnaSequence;
+    char *proteinSequence;
+    int best_score;
+    double start;
+    double end;
+} main_thread_data;
 
 void modded_three_frame(char* dnaSequence, char* proteinSequence, entry_t *hash_table[], int* max_value);
 
@@ -212,6 +223,14 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, entry_t *hash_
     // return max_val;
 }
 
+int six_frame(char* dnaSequence, char* proteinSequence);
+void* six_frame_middleman(void* args) {
+    main_thread_data *data = (main_thread_data *)args;
+    data->start = clock();
+    data->best_score = six_frame(data->dnaSequence, data->proteinSequence);
+    data->end = clock();
+}
+
 int six_frame(char* dnaSequence, char* proteinSequence) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int C1[N][M + 1], C2[N][M + 1];
@@ -246,7 +265,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
-    printf("Value of max1, max2: %d, %d\n", max1, max2);
+    // printf("Value of max1, max2: %d, %d\n", max1, max2);
     return max_of_two(max1, max2);
 }
 
@@ -255,13 +274,34 @@ int main() {
     String proteinSequences[] = {"IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    for(i = 0; i < 4; i++) {
+    #ifdef THREADING
+    main_thread_data *data[NUM_INSTANCES];
+    for(i = 0; i < NUM_INSTANCES; i++) {
+        data[i] = (main_thread_data *)malloc(sizeof(main_thread_data));
+    }
+    pthread_t threads[NUM_INSTANCES];
+    #endif
+    for(i = 1; i < 4; i++) {
         init_hash_table(orig_ht);
         init_hash_table(reverse_ht);
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
         start = clock();
+        #ifndef THREADING
         printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
+        #else
+        for(int j = 0; j < NUM_INSTANCES; j++) {
+            data[j]->thread_no = j;
+            data[j]->dnaSequence = dnaSequences[i];
+            data[j]->proteinSequence = proteinSequences[i];
+            pthread_create(&threads[j], NULL, six_frame_middleman, (void *)data[j]);
+            pthread_join(threads[j], NULL);
+        }
+        for(int j = 0; j < NUM_INSTANCES; j++) {
+            printf("Thread %d: %d\n", j, data[j]->best_score);
+            printf("\tTime taken: %f ms\n", (data[j]->end - data[j]->start)*1e3 / CLOCKS_PER_SEC);
+        }
+        #endif
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
         printf("Run %d time taken: %f ms\n\n", i, time_taken);
