@@ -236,6 +236,8 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     int C1[N][M + 1], C2[N][M + 1];
     int max1, max2;
     pthread_t thread1, thread2;
+    // int retval[2];
+
     #ifdef PRINTERS
     printf("First Run:\n");
     #endif
@@ -246,7 +248,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     data1->hash_table = orig_ht;
     data1->max_val = &max1;
     pthread_create(&thread1, NULL, middleman, (void *)data1);
-    // modded_three_frame(dnaSequence, proteinSequence, orig_ht, &max1);
+    // modded_three_frame(dnaSequence, proteinSequence, orig_ht, &retval[0]);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
@@ -261,10 +263,13 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     data2->hash_table = reverse_ht;
     data2->max_val = &max2;
     pthread_create(&thread2, NULL, middleman, (void *)data2);
-    // modded_three_frame(dnaSequence2, proteinSequence, reverse_ht, &max2);
+    // modded_three_frame(dnaSequence2, proteinSequence, reverse_ht, &retval[1]);
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
+    // max1 = retval[0];
+    // max2 = retval[1];
+
     // printf("Value of max1, max2: %d, %d\n", max1, max2);
     return max_of_two(max1, max2);
 }
@@ -281,7 +286,7 @@ int main() {
     }
     pthread_t threads[NUM_INSTANCES];
     #endif
-    for(i = 1; i < 4; i++) {
+    for(i = 0; i < 4; i++) {
         init_hash_table(orig_ht);
         init_hash_table(reverse_ht);
         printf("DNA Sequence: %s\n", dnaSequences[i]);
