@@ -300,9 +300,9 @@ int main() {
             data[j]->dnaSequence = dnaSequences[i];
             data[j]->proteinSequence = proteinSequences[i];
             pthread_create(&threads[j], NULL, six_frame_middleman, (void *)data[j]);
-            pthread_join(threads[j], NULL);
         }
         for(int j = 0; j < NUM_INSTANCES; j++) {
+            pthread_join(threads[j], NULL);
             printf("Thread %d: %d\n", j, data[j]->best_score);
             printf("\tTime taken: %f ms\n", (data[j]->end - data[j]->start)*1e3 / CLOCKS_PER_SEC);
         }
