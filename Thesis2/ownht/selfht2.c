@@ -19,6 +19,29 @@ unsigned int hash(int i, int j, int matrix) {
     return key % TABLE_SIZE;
 }
 
+void ht_insert(int i, int j, int matrix, int value, entry_t *hash_table[]) {
+    // print_entry(entry);
+    int index = hash(i, j, matrix);
+    entry_t *entry = malloc(sizeof(entry_t));
+    entry->i = i;
+    entry->j = j;
+    entry->matrix = matrix;
+    entry->value = value;
+    // printf("Inserting at index %i\n", index);
+    if (hash_table[index] != NULL) return;
+    hash_table[index] = entry;
+}
+
+bool ht_search(int i, int j, int matrix, int *value, entry_t *hash_table[]) {
+    int index = hash(i, j, matrix);
+    if (hash_table[index] != NULL) {
+        *value = hash_table[index]->value;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void init_hash_table(entry_t *hash_table[]) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         hash_table[i] = NULL;
@@ -51,27 +74,4 @@ void print_table_to_file(FILE *fp, entry_t *hash_table[]) {
 
 void print_entry(entry_t *entry) {
     printf("Entry: %i, %i, %i. Value: %i\n", entry->i, entry->j, entry->matrix, entry->value);
-}
-
-void ht_insert(int i, int j, int matrix, int value, entry_t *hash_table[]) {
-    // print_entry(entry);
-    int index = hash(i, j, matrix);
-    entry_t *entry = malloc(sizeof(entry_t));
-    entry->i = i;
-    entry->j = j;
-    entry->matrix = matrix;
-    entry->value = value;
-    // printf("Inserting at index %i\n", index);
-    if (hash_table[index] != NULL) return;
-    hash_table[index] = entry;
-}
-
-bool ht_search(int i, int j, int matrix, int *value, entry_t *hash_table[]) {
-    int index = hash(i, j, matrix);
-    if (hash_table[index] != NULL) {
-        *value = hash_table[index]->value;
-        return true;
-    } else {
-        return false;
-    }
 }
