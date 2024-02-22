@@ -157,6 +157,63 @@ void modded_three_frame(char* dnaSequence, char* proteinSequence, entry_t *hash_
     // Compute scores recursively
     compute_scores_recursive(dnaSequence, proteinSequence, hash_table, N, M, gep, gop, frameshift_penalty, I, D, C, TI, TD, TC, 0, 1);
 
+    // Traceback Matrix Filling
+    for(i = 0; i < N; i++) {
+        #ifdef FILE_TRACE
+        letter = 'A' + i;
+        strcpy(filename, &letter);
+        if (reversed)
+            strcat(filename, &letter);
+        strcat(filename, "_traceback.txt");
+        FILE *fp = fopen(filename, "w");
+        #endif
+        for(j = 0; j < M; j++) {
+            if(!ht_search(i, j, 4, &TI[i][j], hash_table)) {
+                TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
+                ht_insert(i, j, 4, TI[i][j], hash_table);
+            }
+            if(!ht_search(i, j, 5, &TD[i][j], hash_table)) {
+                TD[i][j] = D[i][j] == D[i-3][j] - gep ? 0 : (D[i][j] == C[i-3][j] - gop - gep ? 1 : -999);
+                ht_insert(i, j, 5, TD[i][j], hash_table);
+            }
+            if(!ht_search(i, j, 6, &TC[i][j], hash_table)) {
+                if(C[i][j] == I[i][j])
+                    TC[i][j] = -2;
+                else if(C[i][j] == D[i][j])
+                    TC[i][j] = -1;
+                else if(C[i][j] == C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+                    TC[i][j] = 2;
+                else if(C[i][j] == C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)))
+                    TC[i][j] = 3;
+                else if(C[i][j] == C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+                    TC[i][j] = 4;
+                else
+                    TC[i][j] = 0;
+                ht_insert(i, j, 6, TC[i][j], hash_table);
+            }
+        }
+        #ifdef FILE_TRACE
+        print_table_to_file(fp, hash_table);
+        fclose(fp);
+        #endif
+    }
+
+    // Print the matrices for debugging
+    #ifdef PRINTERS
+    printf("I Matrix:\n");
+    print_matrix(N, M + 1, I);
+    printf("D Matrix:\n");
+    print_matrix(N, M + 1, D);
+    printf("C Matrix:\n");
+    print_matrix(N, M + 1, C);
+    printf("TI Matrix:\n");
+    print_matrix(N, M + 1, TI);
+    printf("TD Matrix:\n");
+    print_matrix(N, M + 1, TD);
+    printf("TC Matrix:\n");
+    print_matrix(N, M + 1, TC);
+    #endif
+
     // Other operations...
     int max_val = -999;
     for(i = 0; i < N; i++) {
@@ -254,7 +311,7 @@ int main() {
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
         printf("Run %d time taken: %f ms\n\n", i, time_taken);
-        // break;
+        break;
     }
     return 0;
 }
