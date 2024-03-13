@@ -11,7 +11,7 @@
 #include "../src/constants.h"
 #include "../src/converters.c"
 #include "../src/maxfunctions.c"
-#include "selfht2.c"
+#include "selfht3.c"
 
 #define NUM_INSTANCES 10
 #define PRINTERS 1
