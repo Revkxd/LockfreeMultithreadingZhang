@@ -169,16 +169,24 @@ int main() {
     String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    for(i = 0; i < 5; i++) {
-        printf("DNA Sequence: %s\n", dnaSequences[i]);
-        printf("Protein Sequence: %s\n", proteinSequences[i]);
-        start = clock();
-        printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
-        end = clock();
-        time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-        printf("Run %d time taken: %f ms\n\n", i, time_taken);
-        // break;
-    }
+    // for(i = 0; i < 5; i++) {
+    //     printf("DNA Sequence: %s\n", dnaSequences[i]);
+    //     printf("Protein Sequence: %s\n", proteinSequences[i]);
+    //     start = clock();
+    //     printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
+    //     end = clock();
+    //     time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+    //     printf("Run %d time taken: %f ms\n\n", i, time_taken);
+    //     // break;
+    // }
+
+    String dnaSeq = "GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC";
+    String protSeq = "PROHISARGVALARGVALSERPROARGGLYALAALAALASERALASERLEUCYSTHRILEALAGLNVALPROTHRSERALAPRORGLYVALARGMETPROALAPRONPROALAHISASNVALLEUVALSERALACYSARGGLYPROTHRPROPROPROSERHISARGGLYTHRCYSALASERLEUSERALAVAPRORARGARGVALSERALAHILEUGLYVALILEARGLEUPHEGLYPROSERTRPARGGLYTHRASNVALGLYPROCYSPROGLY";
+    start = clock();
+    printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
+    end = clock();
+    time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+    printf("Run %d time taken: %f ms\n\n", i, time_taken);
     return 0;
 }
 #endif
