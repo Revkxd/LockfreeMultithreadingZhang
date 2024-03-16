@@ -7,9 +7,9 @@
 #include <math.h>
 #include <time.h>
 
-#include "constants.h"
-#include "converters.h"
-#include "maxfunctions.h"
+#include "maxfunctions.c"
+#include "converters.c"
+#include "selfht.c"
 
 #define PRINTERS 1
 #undef PRINTERS
@@ -63,9 +63,15 @@ int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     if (i == 0 || j == 0) {
         return 0;
     }
+    int score = -999;
+    if (ht_search(i, j, 1, &score)) {
+        return score;
+    }
 
     // Recursive case for I matrix
-    return max_of_two(calculateI(dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gep, calculateC(dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gop - gep);
+    score = max_of_two(calculateI(dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gep, calculateC(dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gop - gep);
+    ht_insert(i, j, 1, score);
+    return score;
 }
 
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
@@ -73,15 +79,25 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     if (i < 4 || j == 0) {
         return 0;
     }
+    int score = -999;
+    if(ht_search(i, j, 2, &score)) {
+        return score;
+    }
 
     // Recursive case for D matrix
-    return max_of_two(calculateD(dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gep, calculateC(dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gop - gep);
+    score = max_of_two(calculateD(dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gep, calculateC(dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gop - gep);
+    ht_insert(i, j, 2, score);
+    return score;
 }
 
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     // Base case: if i or j is 0, return 0
     if (i == 0 || j == 0) {
         return 0;
+    }
+    int score = -999;
+    if (ht_search(i, j, 3, &score)) {
+        return score;
     }
 
     // Recursive cases for C matrix
@@ -90,13 +106,15 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 
     // Calculate C[i][j] based on I[i][j], D[i][j], and C[i][j]
     // Adjust this part based on your actual calculation logic
-    return max_of_five(
+    score = max_of_five(
         I_val,
         D_val,
         calculateC(dnaSequence, proteinSequence, i - 2, j - 1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty,
         calculateC(dnaSequence, proteinSequence, i - 3, j - 1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)),
         calculateC(dnaSequence, proteinSequence, i - 4, j - 1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty
     );
+    ht_insert(i, j, 3, score);
+    return score;
 }
 
 int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
@@ -113,19 +131,8 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
                 continue;
             D[i][j] = calculateD(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             C[i][j] = calculateC(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
-            // D[i][j] = max_of_two(D[i-3][j] - gep, C[i-3][j] - gop - gep);
-            // C[i][j] = max_of_five(
-            //     I[i][j],
-            //     D[i][j],
-            //     C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty,
-            //     C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)),
-            //     C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty
-            // );
         }
     }
-
-    printf("C Matrix:\n");
-    print_matrix(N, M + 1, C);
 
     int max_val = -999;
     for(i = 0; i < N; i++) {
@@ -162,33 +169,34 @@ int main() {
     String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    // for(i = 0; i < 5; i++) {
-    //     printf("DNA Sequence: %s\n", dnaSequences[i]);
-    //     printf("Protein Sequence: %s\n", proteinSequences[i]);
-    //     start = clock();
-    //     printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
-    //     end = clock();
-    //     time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    //     printf("Run %d time taken: %f ms\n\n", i, time_taken);
-    //     // break;
-    // }
+    for(i = 0; i < 5; i++) {
+        init_hash_table();
+        printf("DNA Sequence: %s\n", dnaSequences[i]);
+        printf("Protein Sequence: %s\n", proteinSequences[i]);
+        start = clock();
+        printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
+        end = clock();
+        time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+        printf("Run %d time taken: %f ms\n\n", i, time_taken);
+        // break;
+    }
 
     // String dnaSeq = "GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC";
     // String protSeq = "PROHISARGVALARGVALSERPROARGGLYALAALAALASERALASERLEUCYSTHRILEALAGLNVALPROTHRSERALAPRORGLYVALARGMETPROALAPRONPROALAHISASNVALLEUVALSERALACYSARGGLYPROTHRPROPROPROSERHISARGGLYTHRCYSALASERLEUSERALAVAPRORARGARGVALSERALAHILEUGLYVALILEARGLEUPHEGLYPROSERTRPARGGLYTHRASNVALGLYPROCYSPROGLY";
     
-    char dnaSeq[STRING_MAX];
-    strcpy(dnaSeq,
-          "ATTGACAACCGCGTCCGCCGC"
-          );
-    char protSeq[STRING_MAX];
-    strcpy(protSeq,
-          "IDNRVR"
-          );
-    start = clock();
-    printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
-    end = clock();
-    time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    printf("Run %d time taken: %f ms\n\n", i, time_taken);
+    // char dnaSeq[STRING_MAX];
+    // strcpy(dnaSeq,
+    //       "ATTGACAACCGCGTCCGCCGC"
+    //       );
+    // char protSeq[STRING_MAX];
+    // strcpy(protSeq,
+    //       "IDNRVR"
+    //       );
+    // start = clock();
+    // printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
+    // end = clock();
+    // time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+    // printf("Run %d time taken: %f ms\n\n", i, time_taken);
     return 0;
 }
 #endif
