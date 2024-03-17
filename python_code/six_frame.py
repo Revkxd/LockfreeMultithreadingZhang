@@ -105,7 +105,7 @@ def modded_three_frame(dna_input, protein_input):
             elif C[i][j] == C[i-4][j-1] + get_score(scoring, dna_input, protein_input, i, j) - frameshift_penalty: TC[i][j] = 4
 
     matrix_printer([I, D, C, TI, TD, TC])
-    return C
+    return max(flatten_list(C))
 
 def reverse(seq):
     """Returns a reversed string"""
@@ -134,20 +134,13 @@ def reverse_complement(seq):
     return seq
 
 def six_frame(dna_input, protein_input):
-    C1 = modded_three_frame(dna_input, protein_input)
+    sc1 = modded_three_frame(dna_input, protein_input)
     print("\n\n")
-    C2 = modded_three_frame(reverse_complement(dna_input), protein_input)
+    sc2 = modded_three_frame(reverse_complement(dna_input), protein_input)
 
-    return max(max(flatten_list(C1)), max(flatten_list(C2)))
+    return max(sc1, sc2)
 
 if __name__ == '__main__':
-    dna_inputs = ['ATGCG', 'ATGCGA', 'ATGCGATACGCTTGA', 'CTTGGTCCGAAT']
-    protein_inputs = ['MCA', 'MR', 'MRIR', 'LGPL']
-    # thing = bl.BLOSUM(62, default=0)[translate_codon(dna_input[0:3])][protein_input[1]]
-    # print(thing)
-
-    for dna_input, protein_input in zip(dna_inputs, protein_inputs):
-        ans = six_frame(dna_input, protein_input)
-        print(f'Score: {ans}')
-        print('-' * 50)
-        break
+    dnaSeq = 'GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC'
+    proteinSeq = 'MAGTVLGVGAGVFILALLWVAVLLLCVLLSRASGAARFSVIFLFFGAVIITSVLLLFPRAGEFPAPEVEVKIVDDFFIGRYVLLAFLSAIFLGGLFLVLIHYVLEPIYAKPLHSY'
+    print(f'Score: {six_frame(dnaSeq, proteinSeq)}')
