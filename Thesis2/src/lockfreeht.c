@@ -1,8 +1,9 @@
-// #define RECURSIVE
+#define RECURSIVE
 #ifdef RECURSIVE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <atomicdefs.h>
 
 #define TABLE_SIZE 500000
 
@@ -13,7 +14,15 @@ typedef struct {
     int value;
 } entry_t;
 
-entry_t *hash_table[TABLE_SIZE];
+typedef struct ht_ent {
+    struct ht_ent *next;
+    int i;
+    int j;
+    int matrix;
+    int value;
+} ht_entry;
+
+static ht_entry *hash_table[TABLE_SIZE];
 
 unsigned int hash(int i, int j, int matrix) {
     unsigned int key = i * j * matrix;
@@ -51,21 +60,27 @@ void print_table_to_file(FILE *fp) {
     fprintf(fp, "-------------------\n");
 }
 
-void print_entry(entry_t *entry) {
-    printf("Entry: %i, %i, %i. Value: %i\n", entry->i, entry->j, entry->matrix, entry->value);
+void print_entry(ht_entry *entry) {
+    printf("Entry: %i, %i, %i\n", entry->i, entry->j, entry->matrix);
 }
 
 void ht_insert(int i, int j, int matrix, int value) {
     // print_entry(entry);
-    int index = hash(i, j, matrix);
-    entry_t *entry = malloc(sizeof(entry_t));
-    entry->i = i;
-    entry->j = j;
-    entry->matrix = matrix;
+    unsigned int index = hash(i, j, matrix);
+    ht_entry *entry = (ht_entry *)malloc(sizeof(ht_entry));
     entry->value = value;
     // printf("Inserting at index %i\n", index);
+    ht_entry *ent, *oldent, *newent = NULL;
+    ht_entry *inserted_entry = NULL;
     if (hash_table[index] != NULL) return;
     hash_table[index] = entry;
+
+    do {
+        while (ent && (i == ent->i && j == ent->j && matrix == ent->matrix)) {
+            oldent = ent;
+            ent = ent->next;
+        }
+    } while (hash_table[index] != NULL);
 }
 
 bool ht_search(int i, int j, int matrix, int *value) {
