@@ -1,4 +1,4 @@
-// #define RECSEQ
+#define RECSEQ
 #ifdef RECSEQ
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,13 +59,14 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if j is 0, return 0
-    if (i == 0 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if (ht_search(i, j, 1, &score)) {
         return score;
+    }
+
+    // Base case: if j is 0, return 0
+    if (i == 0 || j == 0) {
+        return 0;
     }
 
     // Recursive case for I matrix
@@ -75,13 +76,14 @@ int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 }
 
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if i is less than 4 or j is 0, return 0
-    if (i < 4 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if(ht_search(i, j, 2, &score)) {
         return score;
+    }
+
+    // Base case: if i is less than 4 or j is 0, return 0
+    if (i < 4 || j == 0) {
+        return 0;
     }
 
     // Recursive case for D matrix
@@ -91,13 +93,14 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 }
 
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if i or j is 0, return 0
-    if (i == 0 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if (ht_search(i, j, 3, &score)) {
         return score;
+    }
+
+    // Base case: if i or j is 0, return 0
+    if (i == 0 || j == 0) {
+        return 0;
     }
 
     // Recursive cases for C matrix
