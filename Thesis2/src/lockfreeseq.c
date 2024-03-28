@@ -13,14 +13,35 @@
 #define PRINTERS 1
 #undef PRINTERS
 
+typedef struct t_data {
+    int thread_id;
+    /*
+        (i, j) for thread to start, no need for matrix because the algorithm flow computes for it
+    */
+    int i;
+    int j;
+    int score;
+    char* dnaSequence;
+    char* proteinSequence;
+    int N;
+    int M;
+    int gep;
+    int gop;
+    int frameshift_penalty;
+} thread_data_t;
+
 #define MAX_THREADS 4
 #define MASTER_THREAD_ID 0
 static unsigned int defined_max_threads = MAX_THREADS;
-static entry_t thread_data[MAX_THREADS];
+static thread_data_t thread_data[MAX_THREADS];
 static pthread_t threads[MAX_THREADS];
 
 static pthread_mutex_t term_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t term_cond = PTHREAD_COND_INITIALIZER;
+static int term_thread_id = -1;
+
+static unsigned int num_active_threads = 0;
+int active_thread_ids[MAX_THREADS];
 
 int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
@@ -67,13 +88,13 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if j is 0, return 0
-    if (i == 0 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if (ht_search(i, j, 1, &score)) {
         return score;
+    }
+    // Base case: if j is 0, return 0
+    if (i == 0 || j == 0) {
+        return 0;
     }
 
     // Recursive case for I matrix
@@ -83,13 +104,13 @@ int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 }
 
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if i is less than 4 or j is 0, return 0
-    if (i < 4 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if(ht_search(i, j, 2, &score)) {
         return score;
+    }
+    // Base case: if i is less than 4 or j is 0, return 0
+    if (i < 4 || j == 0) {
+        return 0;
     }
 
     // Recursive case for D matrix
@@ -99,13 +120,13 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 }
 
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
-    // Base case: if i or j is 0, return 0
-    if (i == 0 || j == 0) {
-        return 0;
-    }
     int score = -999;
     if (ht_search(i, j, 3, &score)) {
         return score;
+    }
+    // Base case: if i or j is 0, return 0
+    if (i == 0 || j == 0) {
+        return 0;
     }
 
     // Recursive cases for C matrix
@@ -152,6 +173,77 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
     return max_val;
 }
 
+void *three_frame_thread(void *arg) {
+    thread_data_t *data = (thread_data_t *)arg;
+    int i = data->i;
+    int j = data->j;
+    int N = data->N;
+    int M = data->M;
+    int I[N][M + 1], D[N][M + 1], C[N][M+1];
+    int TI[N][M + 1], TD[N][M + 1], TC[N][M + 1];
+    matrixInitialize(data->dnaSequence, data->proteinSequence, N, M, I, D, C, data->gep, data->gop, data->frameshift_penalty);
+    
+    pthread_mutex_lock(&term_mutex);
+    data->score = modded_three_frame(data->dnaSequence, data->proteinSequence, data->N, data->M, I, D, C, data->gep, data->gop, data->frameshift_penalty);
+    if(term_thread_id == -1) {
+        term_thread_id = data->thread_id;
+    }
+    pthread_cond_signal(&term_cond);
+    pthread_mutex_unlock(&term_mutex);
+    return &data->score;
+}
+
+static int three_frame_master_thread(char* dnaSequence, char* proteinSequence, int N, int M, int gep, int gop, int frameshift_penalty) {
+    int actindex=0;
+    int new_thread_id;
+    int finished_thread_id;
+    int rc;
+    int *score;
+
+    term_thread_id = -1;
+    num_active_threads = 0;
+
+    srand(time(NULL));
+    while (num_active_threads < defined_max_threads)
+    {
+        new_thread_id = num_active_threads;
+        thread_data[num_active_threads].thread_id = num_active_threads;
+        thread_data[num_active_threads].i = rand() % N;
+        thread_data[num_active_threads].j = rand() % M;
+        printf("i, j for thread %d: %d, %d\n", new_thread_id, thread_data[num_active_threads].i, thread_data[num_active_threads].j);
+        thread_data[num_active_threads].score = -999;
+        thread_data[num_active_threads].dnaSequence=dnaSequence;
+        thread_data[num_active_threads].proteinSequence=proteinSequence;
+        thread_data[num_active_threads].N = N;
+        thread_data[num_active_threads].M = M;
+        thread_data[num_active_threads].gep = gep;
+        thread_data[num_active_threads].gop = gop;
+        thread_data[num_active_threads].frameshift_penalty = frameshift_penalty;
+        rc = pthread_create(&threads[num_active_threads], NULL, three_frame_thread, (void *)&thread_data[num_active_threads]);
+        if (rc)
+        {
+            printf("ERROR; return code from pthread_create() for thread_id %d is %d\n", new_thread_id, rc);
+            exit(-1);
+        }
+        active_thread_ids[actindex++] = num_active_threads;
+        num_active_threads++;
+    }
+    pthread_mutex_lock(&term_mutex);
+    if (term_thread_id == -1)
+    {
+        pthread_cond_wait(&term_cond, &term_mutex);
+    }
+    finished_thread_id = term_thread_id;
+    pthread_mutex_unlock(&term_mutex);
+    rc = pthread_join(threads[finished_thread_id], (void **)&score);
+    if (rc)
+    {
+        printf("ERROR; return code from pthread_join() is %d\n", rc);
+        exit(-1);
+    }
+    return *score;
+}
+
 int six_frame(char* dnaSequence, char* proteinSequence) {
     int N = strlen(dnaSequence), M = strlen(proteinSequence);
     int gep = 2, gop = 3, frameshift_penalty = 4;
@@ -162,14 +254,16 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     printf("First Run:\n");
     #endif
     init_hash_table();
-    max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    // max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    max1 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
     init_hash_table();
     reverse_complement(dnaSequence);
-    max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    // max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    max2 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
 
     return max_of_two(max1, max2);
 }
@@ -179,33 +273,33 @@ int main() {
     String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    // for(i = 0; i < 5; i++) {
-    //     init_hash_table();
-    //     printf("DNA Sequence: %s\n", dnaSequences[i]);
-    //     printf("Protein Sequence: %s\n", proteinSequences[i]);
-    //     start = clock();
-    //     printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
-    //     end = clock();
-    //     time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    //     printf("Run %d time taken: %f ms\n\n", i, time_taken);
-    //     // break;
-    // }
+    for(i = 0; i < 5; i++) {
+        init_hash_table();
+        printf("DNA Sequence: %s\n", dnaSequences[i]);
+        printf("Protein Sequence: %s\n", proteinSequences[i]);
+        start = clock();
+        printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
+        end = clock();
+        time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+        printf("Run %d time taken: %f ms\n\n", i, time_taken);
+        // break;
+    }
 
     // String dnaSeq = "GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC";
     // String protSeq = "PROHISARGVALARGVALSERPROARGGLYALAALAALASERALASERLEUCYSTHRILEALAGLNVALPROTHRSERALAPRORGLYVALARGMETPROALAPRONPROALAHISASNVALLEUVALSERALACYSARGGLYPROTHRPROPROPROSERHISARGGLYTHRCYSALASERLEUSERALAVAPRORARGARGVALSERALAHILEUGLYVALILEARGLEUPHEGLYPROSERTRPARGGLYTHRASNVALGLYPROCYSPROGLY";
     
-    char dnaSeq[STRING_MAX];
-    strcpy(dnaSeq,
-          "ATTGACAACCGCGTCCGCCGC"
-          );
-    char protSeq[STRING_MAX];
-    strcpy(protSeq,
-          "IDNRVR"
-          );
-    start = clock();
-    printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
-    end = clock();
-    time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    printf("Run %d time taken: %f ms\n\n", i, time_taken);
+    // char dnaSeq[STRING_MAX];
+    // strcpy(dnaSeq,
+    //       "ATTGACAACCGCGTCCGCCGC"
+    //       );
+    // char protSeq[STRING_MAX];
+    // strcpy(protSeq,
+    //       "IDNRVR"
+    //       );
+    // start = clock();
+    // printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
+    // end = clock();
+    // time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+    // printf("Run %d time taken: %f ms\n\n", i, time_taken);
     return 0;
 }
