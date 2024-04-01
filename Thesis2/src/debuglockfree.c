@@ -13,6 +13,9 @@
 #define PRINTERS 1
 #undef PRINTERS
 
+#define DEBUG 1
+#undef DEBUG
+
 time_t overall_start;
 time_t current_clock;
 typedef struct t_data {
@@ -50,7 +53,37 @@ FILE *insert_I;
 FILE *insert_D;
 FILE *insert_C;
 
-int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
+// Something is causing segfault when doing this for initialization
+void recursiveInit(char* dnaSequence, char* proteinSequence, int N, int M, int gep, int gop, int frameshift_penalty) {
+    int i, j;
+    // Initialize hash table if not already done
+    init_hash_table();
+
+    // Initialization
+    for(j = 0; j < M + 1; j++) {
+        ht_insert(0, j, 1, -999); // I[0][j] = -999
+        ht_insert(0, j, 2, -999); // D[0][j] = -999
+        ht_insert(2, j, 2, -999); // D[2][j] = -999
+        ht_insert(3, j, 2, -999); // D[3][j] = -999
+        ht_insert(1, j, 3, ht_search(0, j, 3, NULL) - gop - gep); // D[1][j] = C[0][j] - gop - gep
+    }
+
+    ht_insert(0, 0, 3, 0); // C[0][0] = 0
+    for(j = 1; j < M + 1; j++) {
+        ht_insert(0, j, 3, 0); // C[0][j] = 0
+        ht_insert(j, 0, 3, 0); // C[j][0] = 0
+        ht_insert(1, j, 3, max_of_three(ht_search(1, j, 1, NULL), ht_search(1, j, 2, NULL), ht_search(0, j-1, 3, NULL) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1)))); // C[1][j] = max_of_three(I[1][j], D[1][j], C[0][j-1] + ...)
+        ht_insert(2, j, 3, max_of_two(ht_search(2, j, 1, NULL), ht_search(0, j-1, 3, NULL) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty)); // C[2][j] = max_of_two(I[2][j], C[0][j-1] + ...)
+        ht_insert(3, j, 3, max_of_two(ht_search(3, j, 1, NULL), ht_search(1, j-1, 3, NULL) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty)); // C[3][j] = max_of_two(I[3][j], C[1][j-1] + ...)
+        ht_insert(4, j, 3, max_of_four(ht_search(4, j, 1, NULL), ht_search(4, j, 2, NULL), ht_search(1, j-1, 3, NULL) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)), ht_search(2, j-1, 3, NULL) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty)); // C[4][j] = max_of_four(I[4][j], D[4][j], C[1][j-1] + ...)
+    }
+
+    // Change all negative values in C matrix to 0 (not needed with hash table approach)
+}
+
+void matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
+    // recursiveInit(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
+    return; // Don't need matrix initialize for recursive
     int i, j;
     // Anti-Garbage Values
     for(i = 0; i < N; i++) {
@@ -95,6 +128,9 @@ int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 
 int calculateI(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
+    #ifdef DEBUG
+    printf("Entering Calc I for i: %d, j: %d\n", i, j);
+    #endif
     int score = -999;
     if (ht_search(i, j, 1, &score)) {
         fprintf(insert_I, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'I', score);
@@ -109,10 +145,16 @@ int calculateI(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
     score = max_of_two(calculateI(thread_id, dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gep, calculateC(thread_id, dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gop - gep);
     fprintf(insert_I, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: I, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 1, score);
+    #ifdef DEBUG
+    printf("Exiting Calc I for i: %d, j: %d\n", i, j);
+    #endif
     return score;
 }
 
 int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
+    #ifdef DEBUG
+    printf("Entering Calc D for i: %d, j: %d\n", i, j);
+    #endif
     int score = -999;
     if(ht_search(i, j, 2, &score)) {
         fprintf(insert_D, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'D', score);
@@ -124,13 +166,20 @@ int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
     }
 
     // Recursive case for D matrix
+    if (i >= 4)
     score = max_of_two(calculateD(thread_id, dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gep, calculateC(thread_id, dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gop - gep);
     fprintf(insert_D, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: D, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 2, score);
+    #ifdef DEBUG
+    printf("Exiting Calc D for i: %d, j: %d\n", i, j);
+    #endif
     return score;
 }
 
 int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
+    #ifdef DEBUG
+    printf("Entering Calc C for i: %d, j: %d\n", i, j);
+    #endif
     int score = -999;
     if (ht_search(i, j, 3, &score)) {
         fprintf(insert_C, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'C', score);
@@ -156,6 +205,9 @@ int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
     );
     fprintf(insert_C, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: C, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 3, score);
+    #ifdef DEBUG
+    printf("Exiting Calc C for i: %d, j: %d\n", i, j);
+    #endif
     return score;
 }
 
