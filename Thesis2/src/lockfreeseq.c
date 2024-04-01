@@ -43,46 +43,6 @@ static int term_thread_id = -1;
 static unsigned int num_active_threads = 0;
 int active_thread_ids[MAX_THREADS];
 
-int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
-    int i, j;
-    // Anti-Garbage Values
-    for(i = 0; i < N; i++) {
-        for(j = 0; j < M + 1; j++) {
-            I[i][j] = 0;
-            D[i][j] = 0;
-            C[i][j] = 0;
-        }
-    }
-
-    // NOTE: INFINITY is a double, just converted to int to save memory
-    // Initialization
-    for(j = 0; j < M + 1; j++) {
-        I[0][j] = -999;
-        D[0][j] = -999;
-        D[2][j] = -999;
-        D[3][j] = -999;
-        D[1][j] = C[0][j] - gop - gep;
-    }
-
-    C[0][0] = 0;
-    for(j = 1; j < M + 1; j++) {
-        C[0][j] = 0;
-        C[j][0] = 0;
-        C[1][j] = max_of_three(I[1][j], D[1][j], C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1)));
-        C[2][j] = max_of_two(I[2][j], C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty);
-        C[3][j] = max_of_two(I[3][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty);
-        C[4][j] = max_of_four(I[4][j], D[4][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)), C[2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty);
-    }
-
-    // Change all negative values in C matrix to 0
-    for(i = 0; i < N; i++) {
-        for(j = 0; j < M + 1; j++) {
-            if(C[i][j] < 0)
-                C[i][j] = 0;
-        }
-    }
-}
-
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
@@ -149,8 +109,6 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
 int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
 
-    matrixInitialize(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
-
     // Matrix Filling
     for(i = 0; i < N; i++) {
         for(j = 1; j < M + 1; j++) {
@@ -181,7 +139,6 @@ void *three_frame_thread(void *arg) {
     int M = data->M;
     int I[N][M + 1], D[N][M + 1], C[N][M+1];
     int TI[N][M + 1], TD[N][M + 1], TC[N][M + 1];
-    matrixInitialize(data->dnaSequence, data->proteinSequence, N, M, I, D, C, data->gep, data->gop, data->frameshift_penalty);
     
     pthread_mutex_lock(&term_mutex);
     data->score = modded_three_frame(data->dnaSequence, data->proteinSequence, data->N, data->M, I, D, C, data->gep, data->gop, data->frameshift_penalty);
