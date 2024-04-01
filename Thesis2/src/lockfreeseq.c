@@ -167,7 +167,9 @@ static int three_frame_master_thread(char* dnaSequence, char* proteinSequence, i
         thread_data[num_active_threads].thread_id = num_active_threads;
         thread_data[num_active_threads].i = rand() % N;
         thread_data[num_active_threads].j = rand() % M;
+        #ifdef PRINTERS
         printf("i, j for thread %d: %d, %d\n", new_thread_id, thread_data[num_active_threads].i, thread_data[num_active_threads].j);
+        #endif
         thread_data[num_active_threads].score = -999;
         thread_data[num_active_threads].dnaSequence=dnaSequence;
         thread_data[num_active_threads].proteinSequence=proteinSequence;
