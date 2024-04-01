@@ -13,6 +13,8 @@
 #define PRINTERS 1
 #undef PRINTERS
 
+time_t overall_start;
+time_t current_clock;
 typedef struct t_data {
     int thread_id;
     /*
@@ -43,9 +45,10 @@ static int term_thread_id = -1;
 static unsigned int num_active_threads = 0;
 int active_thread_ids[MAX_THREADS];
 
-FILE *insert;
-FILE *found;
 FILE *starts;
+FILE *insert_I;
+FILE *insert_D;
+FILE *insert_C;
 
 int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
@@ -94,7 +97,7 @@ int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 int calculateI(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     int score = -999;
     if (ht_search(i, j, 1, &score)) {
-        fprintf(found, "FOUND! Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+        fprintf(insert_I, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'I', score);
         return score;
     }
     // Base case: if j is 0, return 0
@@ -104,7 +107,7 @@ int calculateI(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 
     // Recursive case for I matrix
     score = max_of_two(calculateI(thread_id, dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gep, calculateC(thread_id, dnaSequence, proteinSequence, i, j - 1, gep, gop, frameshift_penalty) - gop - gep);
-    fprintf(insert, "INSERT || Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+    fprintf(insert_I, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: I, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 1, score);
     return score;
 }
@@ -112,7 +115,7 @@ int calculateI(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     int score = -999;
     if(ht_search(i, j, 2, &score)) {
-        fprintf(found, "FOUND! Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+        fprintf(insert_D, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'D', score);
         return score;
     }
     // Base case: if i is less than 4 or j is 0, return 0
@@ -122,7 +125,7 @@ int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 
     // Recursive case for D matrix
     score = max_of_two(calculateD(thread_id, dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gep, calculateC(thread_id, dnaSequence, proteinSequence, i - 3, j, gep, gop, frameshift_penalty) - gop - gep);
-    fprintf(insert, "INSERT || Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+    fprintf(insert_D, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: D, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 2, score);
     return score;
 }
@@ -130,7 +133,7 @@ int calculateD(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
 int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     int score = -999;
     if (ht_search(i, j, 3, &score)) {
-        fprintf(found, "FOUND! Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+        fprintf(insert_C, "FOUND! Tick: %ld Thread id: %d, i: %d, j: %d, matrix: %c, score: %d\n", clock() - overall_start, thread_id, i, j, 'C', score);
         return score;
     }
     // Base case: if i or j is 0, return 0
@@ -151,7 +154,7 @@ int calculateC(int thread_id, char* dnaSequence, char* proteinSequence, int i, i
         calculateC(thread_id, dnaSequence, proteinSequence, i - 3, j - 1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)),
         calculateC(thread_id, dnaSequence, proteinSequence, i - 4, j - 1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty
     );
-    fprintf(insert, "INSERT || Thread id: %d, i: %d, j: %d, score: %d\n", thread_id, i, j, score);
+    fprintf(insert_C, "INSERT Tick: %ld || Thread id: %d, i: %d, j: %d, matrix: C, score: %d\n", clock() - overall_start, thread_id, i, j, score);
     ht_insert(i, j, 3, score);
     return score;
 }
@@ -264,6 +267,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     #endif
     init_hash_table();
     // max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    overall_start = clock();
     max1 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
     cleanup_hash_table();
 
@@ -272,6 +276,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     #endif
     init_hash_table();
     reverse_complement(dnaSequence);
+    overall_start = clock();
     // max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
     max2 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
     cleanup_hash_table();
@@ -284,10 +289,11 @@ int main() {
     String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int i;
     double time_taken, start, end;
-    insert = fopen("insert.txt", "w");
-    found = fopen("found.txt", "w");
     starts = fopen("starts.txt", "w");
-    for(i = 3; i < 5; i++) {
+    insert_I = fopen("insert_I.txt", "w");
+    insert_D = fopen("insert_D.txt", "w");
+    insert_C = fopen("insert_C.txt", "w");
+    for(i = 0; i < 5; i++) {
         // init_hash_table();
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
@@ -299,9 +305,10 @@ int main() {
         printf("Run %d time taken: %f ms\n\n", i, time_taken);
         break;
     }
-    fclose(insert);
-    fclose(found);
     fclose(starts);
+    fclose(insert_I);
+    fclose(insert_D);
+    fclose(insert_C);
 
     // String dnaSeq = "GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC";
     // String protSeq = "PROHISARGVALARGVALSERPROARGGLYALAALAALASERALASERLEUCYSTHRILEALAGLNVALPROTHRSERALAPRORGLYVALARGMETPROALAPRONPROALAHISASNVALLEUVALSERALACYSARGGLYPROTHRPROPROPROSERHISARGGLYTHRCYSALASERLEUSERALAVAPRORARGARGVALSERALAHILEUGLYVALILEARGLEUPHEGLYPROSERTRPARGGLYTHRASNVALGLYPROCYSPROGLY";
