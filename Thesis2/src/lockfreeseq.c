@@ -230,17 +230,29 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 int main() {
     String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGC","ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
     String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
+    int correctScores[] = {30, 179, 177, 162, 191};
+    int score;
+    int countCorrect = 0;
+
     int i;
     double time_taken, start, end;
     for(i = 0; i < 5; i++) {
         init_hash_table();
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
+        countCorrect = 0;
+        for(int j = 0; j < 50; j++) {
+            score = six_frame(dnaSequences[i], proteinSequences[i]);
+            if(score == correctScores[i]) {
+                countCorrect++;
+            }
+        }
+        printf("Correct: %d / 50\n", countCorrect);
         start = clock();
         printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-        printf("Run %d time taken: %f ms\n\n", i, time_taken);
+        // printf("Run %d time taken: %f ms\n\n", i, time_taken);
         // break;
     }
 
