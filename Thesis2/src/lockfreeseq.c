@@ -8,7 +8,7 @@
 
 #include "maxfunctions.c"
 #include "converters.c"
-#include "lockfreeht.c"
+#include "splitlfht.c"
 
 #define PRINTERS 1
 #undef PRINTERS
@@ -46,6 +46,34 @@ int active_thread_ids[MAX_THREADS];
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
+
+void initializations(char* dna, char* protein, int N, int M, int gep, int gop, int frameshift_penalty) {
+    return; // disabled because for some reason when done the answers are wrong.
+    int j;
+    for(j = 0; j < M + 1; j++) {
+        ht_insert(0, j, 1, -999);
+        ht_insert(0, j, 2, -999);
+        ht_insert(2, j, 2, -999);
+        ht_insert(3, j, 2, -999);
+        ht_insert(1, j, 2, calculateC(dna, protein, 0, j, gep, gop, frameshift_penalty) - gop - gep);
+    }
+
+    for(j = 1; j < M + 1; j++) {
+        ht_insert(0, j, 3, 0);
+        ht_insert(j, 0, 3, 0);
+        ht_insert(1, j, 3, max_of_three(calculateI(dna, protein, 1, j, gep, gop, frameshift_penalty),
+                                        calculateD(dna, protein, 1, j, gep, gop, frameshift_penalty),
+                                        calculateC(dna, protein, 0, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 1))));
+        ht_insert(2, j, 3, max_of_two(calculateI(dna, protein, 2, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 0, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 2)) - frameshift_penalty));
+        ht_insert(3, j, 3, max_of_two(calculateI(dna, protein, 3, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 1, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 3)) - frameshift_penalty));
+        ht_insert(4, j, 3, max_of_four(calculateI(dna, protein, 4, j, gep, gop, frameshift_penalty),
+                                    calculateD(dna, protein, 4, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 1, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 4)),
+                                    calculateC(dna, protein, 2, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 4)) - frameshift_penalty));
+    }
+}
 
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     int score = -999;
@@ -113,7 +141,6 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
     for(i = 0; i < N; i++) {
         for(j = 1; j < M + 1; j++) {
             I[i][j] = calculateI(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
-            // I[i][j] = max_of_two(I[i][j-1] - gep, C[i][j-1] - gop - gep);
             if (i < 4)
                 continue;
             D[i][j] = calculateD(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
@@ -213,6 +240,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     printf("First Run:\n");
     #endif
     init_hash_table();
+    initializations(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
     // max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
     max1 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
 
@@ -220,6 +248,7 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     printf("Reverse Complement:\n");
     #endif
     init_hash_table();
+    initializations(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
     reverse_complement(dnaSequence);
     // max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
     max2 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
@@ -245,6 +274,8 @@ int main() {
             score = six_frame(dnaSequences[i], proteinSequences[i]);
             if(score == correctScores[i]) {
                 countCorrect++;
+            } else {
+                printf("Wrong score: %d\n", score);
             }
         }
         printf("Correct: %d / 50\n", countCorrect);
