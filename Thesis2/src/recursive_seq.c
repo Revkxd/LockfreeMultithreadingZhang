@@ -172,16 +172,27 @@ int main() {
     String proteinSequences[] = {"IDNRVRR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int correctScores[] = {35, 179, 177, 162, 191};
     int i;
+    int score, countCorrect = 0;
     double time_taken, start, end;
     for(i = 0; i < 5; i++) {
         init_hash_table();
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
+        countCorrect = 0;
+        for(int j = 0; j < 50; j++) {
+            score = six_frame(dnaSequences[i], proteinSequences[i]);
+            if(score == correctScores[i]) {
+                countCorrect++;
+            } else {
+                printf("Wrong score: %d\n", score);
+            }
+        }
+        printf("Correct: %d / 50\n", countCorrect);
         start = clock();
         printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-        printf("Run %d time taken: %f ms\n\n", i, time_taken);
+        // printf("Run %d time taken: %f ms\n\n", i, time_taken);
         // break;
     }
 

@@ -341,22 +341,33 @@ int main() {
     String proteinSequences[] = {"IDNRVRR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
     int correctScores[] = {35, 179, 177, 162, 191};
     int i;
+    int score;
+    int countCorrect = 0;
     double time_taken, start, end;
     starts = fopen("starts.txt", "w");
     insert_I = fopen("insert_I.txt", "w");
     insert_D = fopen("insert_D.txt", "w");
     insert_C = fopen("insert_C.txt", "w");
     for(i = 0; i < 5; i++) {
-        // init_hash_table();
+        init_hash_table();
         printf("DNA Sequence: %s\n", dnaSequences[i]);
         printf("Protein Sequence: %s\n", proteinSequences[i]);
-        printf("N: %ld, M: %ld\n", strlen(dnaSequences[i]), strlen(proteinSequences[i]));
+        countCorrect = 0;
+        for(int j = 0; j < 50; j++) {
+            score = six_frame(dnaSequences[i], proteinSequences[i]);
+            if(score == correctScores[i]) {
+                countCorrect++;
+            } else {
+                printf("Wrong score: %d\n", score);
+            }
+        }
+        printf("Correct: %d / 50\n", countCorrect);
         start = clock();
         printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
         end = clock();
         time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-        printf("Run %d time taken: %f ms\n\n", i, time_taken);
-        break;
+        // printf("Run %d time taken: %f ms\n\n", i, time_taken);
+        // break;
     }
     fclose(starts);
     fclose(insert_I);
