@@ -4,7 +4,7 @@
 #include <stdatomic.h>
 #include "atomicdefs.h"
 
-#define TABLE_SIZE 300
+#define TABLE_SIZE 500000
 
 typedef struct ht_ent {
     struct ht_ent *next;
