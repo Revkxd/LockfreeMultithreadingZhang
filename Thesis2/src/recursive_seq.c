@@ -14,7 +14,7 @@
 #define PRINTERS 1
 #undef PRINTERS
 
-int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
+int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
     // Anti-Garbage Values
     for(i = 0; i < N; i++) {
@@ -33,9 +33,15 @@ int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int
         D[2][j] = -999;
         D[3][j] = -999;
         D[1][j] = C[0][j] - gop - gep;
+        TI[j][0] = -999;
+        TD[0][j] = -999;
+        TD[2][j] = -999;
+        TD[3][j] = -999;
+        TD[1][j] = 1;
     }
 
     C[0][0] = 0;
+    TC[0][0] = 0;
     for(j = 1; j < M + 1; j++) {
         C[0][j] = 0;
         C[j][0] = 0;
@@ -43,6 +49,22 @@ int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int
         C[2][j] = max_of_two(I[2][j], C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty);
         C[3][j] = max_of_two(I[3][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty);
         C[4][j] = max_of_four(I[4][j], D[4][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)), C[2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty);
+
+        TC[0][j] = 0;
+        TC[j][0] = 0;
+        TC[1][j] = C[1][j] == I[1][j] ? -2 : (C[1][j] == D[1][j] ? -1 : (C[1][j] == C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1)) ? 1 : 0));
+        TC[2][j] = C[2][j] == I[2][j] ? -2 : (C[2][j] == C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty ? 2 : 0);
+        TC[3][j] = C[3][j] == I[3][j] ? -2 : (C[3][j] == C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty ? 2 : 0);
+        if(C[4][j] == I[4][j])
+            TC[4][j] = -2;
+        else if(C[4][j] == D[4][j])
+            TC[4][j] = -1;
+        else if(C[4][j] == C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)))
+            TC[4][j] = 3;
+        else if(C[4][j] == C[2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty)
+            TC[4][j] = 2;
+        else
+            TC[4][j] = 0;
     }
 
     // Change all negative values in C matrix to 0
@@ -120,10 +142,10 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     return score;
 }
 
-int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int gep, int gop, int frameshift_penalty) {
+int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
 
-    matrixInitialize(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    matrixInitialize(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
 
     // Matrix Filling
     for(i = 0; i < N; i++) {
@@ -134,6 +156,26 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
                 continue;
             D[i][j] = calculateD(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             C[i][j] = calculateC(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
+        }
+    }
+
+    // Traceback Matrix Filling
+    for(i = 0; i < N; i++) {
+        for(j = 0; j < M; j++) {
+            TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
+            TD[i][j] = D[i][j] == D[i-3][j] - gep ? 0 : (D[i][j] == C[i-3][j] - gop - gep ? 1 : -999);
+            if(C[i][j] == I[i][j])
+                TC[i][j] = -2;
+            else if(C[i][j] == D[i][j])
+                TC[i][j] = -1;
+            else if(C[i][j] == C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+                TC[i][j] = 2;
+            else if(C[i][j] == C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)))
+                TC[i][j] = 3;
+            else if(C[i][j] == C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+                TC[i][j] = 4;
+            else
+                TC[i][j] = 0;
         }
     }
 
@@ -156,13 +198,13 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     #ifdef PRINTERS
     printf("First Run:\n");
     #endif
-    max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
     reverse_complement(dnaSequence);
-    max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
+    max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
 
     return max_of_two(max1, max2);
 }
