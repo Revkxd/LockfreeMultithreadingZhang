@@ -10,9 +10,6 @@
 #include "converters.c"
 #include "splitlfht.c"
 
-#define PRINTERS 1
-#undef PRINTERS
-
 typedef struct t_data {
     int thread_id;
     /*

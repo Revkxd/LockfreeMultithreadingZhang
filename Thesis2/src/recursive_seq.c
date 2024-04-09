@@ -9,9 +9,6 @@
 #include "converters.c"
 #include "splitlfht.c"
 
-#define PRINTERS 1
-#undef PRINTERS
-
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
