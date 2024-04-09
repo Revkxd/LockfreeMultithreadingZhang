@@ -268,7 +268,6 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     init_hash_table();
     initializations(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
     reverse_complement(dnaSequence);
-    // max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, gep, gop, frameshift_penalty);
     max2 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
 
     return max_of_two(max1, max2);
