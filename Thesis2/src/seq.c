@@ -7,9 +7,8 @@
 #include <math.h>
 #include <time.h>
 
-#include "constants.h"
-#include "converters.h"
-#include "maxfunctions.h"
+#include "maxfunctions.c"
+#include "converters.c"
 
 #define PRINTERS 1
 #undef PRINTERS
