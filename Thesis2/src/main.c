@@ -1,6 +1,6 @@
-// #include "lockfreeseq.c"
+#include "lockfreeseq.c"
 // #include "recursive_seq.c"
-#define ITER
+// #define ITER
 #ifdef ITER
 #include "seq.c"
 #endif

@@ -12,71 +12,36 @@
 #define PRINTERS 1
 #undef PRINTERS
 
-int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
-    int i, j;
-    // Anti-Garbage Values
-    for(i = 0; i < N; i++) {
-        for(j = 0; j < M + 1; j++) {
-            I[i][j] = 0;
-            D[i][j] = 0;
-            C[i][j] = 0;
-        }
-    }
-
-    // NOTE: INFINITY is a double, just converted to int to save memory
-    // Initialization
-    for(j = 0; j < M + 1; j++) {
-        I[0][j] = -999;
-        D[0][j] = -999;
-        D[2][j] = -999;
-        D[3][j] = -999;
-        D[1][j] = C[0][j] - gop - gep;
-        TI[j][0] = -999;
-        TD[0][j] = -999;
-        TD[2][j] = -999;
-        TD[3][j] = -999;
-        TD[1][j] = 1;
-    }
-
-    C[0][0] = 0;
-    TC[0][0] = 0;
-    for(j = 1; j < M + 1; j++) {
-        C[0][j] = 0;
-        C[j][0] = 0;
-        C[1][j] = max_of_three(I[1][j], D[1][j], C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1)));
-        C[2][j] = max_of_two(I[2][j], C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty);
-        C[3][j] = max_of_two(I[3][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty);
-        C[4][j] = max_of_four(I[4][j], D[4][j], C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)), C[2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty);
-
-        TC[0][j] = 0;
-        TC[j][0] = 0;
-        TC[1][j] = C[1][j] == I[1][j] ? -2 : (C[1][j] == D[1][j] ? -1 : (C[1][j] == C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1)) ? 1 : 0));
-        TC[2][j] = C[2][j] == I[2][j] ? -2 : (C[2][j] == C[0][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty ? 2 : 0);
-        TC[3][j] = C[3][j] == I[3][j] ? -2 : (C[3][j] == C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty ? 2 : 0);
-        if(C[4][j] == I[4][j])
-            TC[4][j] = -2;
-        else if(C[4][j] == D[4][j])
-            TC[4][j] = -1;
-        else if(C[4][j] == C[1][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)))
-            TC[4][j] = 3;
-        else if(C[4][j] == C[2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 4)) - frameshift_penalty)
-            TC[4][j] = 2;
-        else
-            TC[4][j] = 0;
-    }
-
-    // Change all negative values in C matrix to 0
-    for(i = 0; i < N; i++) {
-        for(j = 0; j < M + 1; j++) {
-            if(C[i][j] < 0)
-                C[i][j] = 0;
-        }
-    }
-}
-
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
 int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty);
+
+int matrixInitialize(char* dna, char* protein, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
+    int j;
+    for(j = 0; j < M + 1; j++) {
+        ht_insert(0, j, 1, -999);
+        ht_insert(0, j, 2, -999);
+        ht_insert(2, j, 2, -999);
+        ht_insert(3, j, 2, -999);
+        ht_insert(1, j, 2, calculateC(dna, protein, 0, j, gep, gop, frameshift_penalty) - gop - gep);
+    }
+
+    for(j = 1; j < M + 1; j++) {
+        ht_insert(0, j, 3, 0);
+        ht_insert(j, 0, 3, 0);
+        ht_insert(1, j, 3, max_of_three(calculateI(dna, protein, 1, j, gep, gop, frameshift_penalty),
+                                        calculateD(dna, protein, 1, j, gep, gop, frameshift_penalty),
+                                        calculateC(dna, protein, 0, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 1))));
+        ht_insert(2, j, 3, max_of_two(calculateI(dna, protein, 2, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 0, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 2)) - frameshift_penalty));
+        ht_insert(3, j, 3, max_of_two(calculateI(dna, protein, 3, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 1, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 3)) - frameshift_penalty));
+        ht_insert(4, j, 3, max_of_four(calculateI(dna, protein, 4, j, gep, gop, frameshift_penalty),
+                                    calculateD(dna, protein, 4, j, gep, gop, frameshift_penalty),
+                                    calculateC(dna, protein, 1, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 4)),
+                                    calculateC(dna, protein, 2, j - 1, gep, gop, frameshift_penalty) + get_score(protein[j - 1], get_translated_codon(dna, 4)) - frameshift_penalty));
+    }
+}
 
 int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, int gop, int frameshift_penalty) {
     int score = -999;
