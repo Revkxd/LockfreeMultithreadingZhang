@@ -1,5 +1,3 @@
-#define SEQ
-#ifdef SEQ
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -162,36 +160,3 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
 
     return max_of_two(max1, max2);
 }
-
-int main() {
-    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGC","ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
-    String proteinSequences[] = {"IDNRVR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
-    int i;
-    double time_taken, start, end;
-    // for(i = 0; i < 5; i++) {
-    //     printf("DNA Sequence: %s\n", dnaSequences[i]);
-    //     printf("Protein Sequence: %s\n", proteinSequences[i]);
-    //     start = clock();
-    //     printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
-    //     end = clock();
-    //     time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    //     printf("Run %d time taken: %f ms\n\n", i, time_taken);
-    //     // break;
-    // }
-
-    char dnaSeq[STRING_MAX];
-    strcpy(dnaSeq,
-          "ATTGACAACCGCGTCCGCCGC"
-          );
-    char protSeq[STRING_MAX];
-    strcpy(protSeq,
-          "IDNRVR"
-          );
-    start = clock();
-    printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
-    end = clock();
-    time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    printf("Run %d time taken: %f ms\n\n", i, time_taken);
-    return 0;
-}
-#endif

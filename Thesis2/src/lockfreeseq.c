@@ -75,7 +75,8 @@ void initializations(char* dna, char* protein, int N, int M, int gep, int gop, i
     }
 }
 
-int matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
+void matrixInitialize(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
+    return;
     int i, j;
     // Initialization
     for(j = 0; j < M + 1; j++) {
@@ -192,32 +193,32 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
     // Matrix Filling
     for(i = 0; i < N; i++) {
         for(j = 1; j < M + 1; j++) {
-            I[i][j] = calculateI(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
+            // I[i][j] = calculateI(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             if (i < 4)
                 continue;
-            D[i][j] = calculateD(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
+            // D[i][j] = calculateD(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             C[i][j] = calculateC(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
         }
     }
 
-    for(i = 0; i < N; i++) {
-        for(j = 0; j < M; j++) {
-            TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
-            TD[i][j] = D[i][j] == D[i-3][j] - gep ? 0 : (D[i][j] == C[i-3][j] - gop - gep ? 1 : -999);
-            if(C[i][j] == I[i][j])
-                TC[i][j] = -2;
-            else if(C[i][j] == D[i][j])
-                TC[i][j] = -1;
-            else if(C[i][j] == C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
-                TC[i][j] = 2;
-            else if(C[i][j] == C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)))
-                TC[i][j] = 3;
-            else if(C[i][j] == C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
-                TC[i][j] = 4;
-            else
-                TC[i][j] = 0;
-        }
-    }
+    // for(i = 0; i < N; i++) {
+    //     for(j = 0; j < M; j++) {
+    //         TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
+    //         TD[i][j] = D[i][j] == D[i-3][j] - gep ? 0 : (D[i][j] == C[i-3][j] - gop - gep ? 1 : -999);
+    //         if(C[i][j] == I[i][j])
+    //             TC[i][j] = -2;
+    //         else if(C[i][j] == D[i][j])
+    //             TC[i][j] = -1;
+    //         else if(C[i][j] == C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+    //             TC[i][j] = 2;
+    //         else if(C[i][j] == C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)))
+    //             TC[i][j] = 3;
+    //         else if(C[i][j] == C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
+    //             TC[i][j] = 4;
+    //         else
+    //             TC[i][j] = 0;
+    //     }
+    // }
 
     int max_val = -999;
     for(i = 0; i < N; i++) {
@@ -325,54 +326,4 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     max2 = three_frame_master_thread(dnaSequence, proteinSequence, N, M, gep, gop, frameshift_penalty);
 
     return max_of_two(max1, max2);
-}
-
-int main() {
-    String dnaSequences[] = {"ATTGACAACCGCGTCCGCCGC","ATTGACAACCGCGTCCGCCGCCGCTTCAAGGGCCAGTACTTGATGCCCAACATTGGCTACGGCTCCAACAAGCGCACCCGCCACATGTTGCCCACCGGCT", "GCTACGTCCGCTCCTCCATGTCCTTGTCCGGCTACATGCCCCCCTTGTGCGACCCCAAGGACGGCCACTTGTTGTTGGACGGCGGCTACGTCAACAACT", "GAGCCCACCTCCGAGATTTTGCAGAACCCCGCCCGCGTCTTGCGCCAGCAGTTGAAGGTCTTGTCCGTCATTGACGGCCAGTCCTACGAGCCCTTGAAGG", "CCCGGCGCCGGCTCCGGCCACGGCCACGGCCCCAACGGCGGCTCCAACTCCTCCTCCTGCACCCCCCCCTCCTCCAACCCCCACATTACCGGCTACGTCG"};
-    String proteinSequences[] = {"IDNRVRR","IDNRVRRRFKGQYLMPNIGYGSNKRTRHMLPTGF", "RYVRSSMSLSGYMPPLCDPKDGHLLLDGGYVNNL", "EPTSEILQNPARVLRQQLKVLSVIDGQSYEPLKD", "PGAGSGHGHGPNGGSNSSSCTPPSSNPHITGYVD"};
-    int correctScores[] = {35, 179, 177, 162, 191};
-    int score;
-    int countCorrect = 0;
-
-    int i;
-    double time_taken, start, end;
-    for(i = 0; i < 5; i++) {
-        init_hash_table();
-        printf("DNA Sequence: %s\n", dnaSequences[i]);
-        printf("Protein Sequence: %s\n", proteinSequences[i]);
-        countCorrect = 0;
-        for(int j = 0; j < 50; j++) {
-            score = six_frame(dnaSequences[i], proteinSequences[i]);
-            if(score == correctScores[i]) {
-                countCorrect++;
-            } else {
-                printf("Wrong score: %d\n", score);
-            }
-        }
-        printf("Correct: %d / 50\n", countCorrect);
-        start = clock();
-        printf("Score: %d\n\n", six_frame(dnaSequences[i], proteinSequences[i]));
-        end = clock();
-        time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-        // printf("Run %d time taken: %f ms\n\n", i, time_taken);
-        // break;
-    }
-
-    // String dnaSeq = "GGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGACGCAAGCCTACGGGCGGGGGTTGGGGGGGCGTGTGTTGCAGGAGCAAAGTCGCACGGCGCCGGGCTGGGGCGGGGGGAGGGTGGCGCCGTGCACGCGCAGAAACTCACGTCACGGTGGCGCGGCGCAGAGACGGGTAGAACCTCAGTAATCCGAAAAGCCGGGATCGACCGCCCCTTGCTTGCAGCCGGGCACTACAGGACCC";
-    // String protSeq = "PROHISARGVALARGVALSERPROARGGLYALAALAALASERALASERLEUCYSTHRILEALAGLNVALPROTHRSERALAPRORGLYVALARGMETPROALAPRONPROALAHISASNVALLEUVALSERALACYSARGGLYPROTHRPROPROPROSERHISARGGLYTHRCYSALASERLEUSERALAVAPRORARGARGVALSERALAHILEUGLYVALILEARGLEUPHEGLYPROSERTRPARGGLYTHRASNVALGLYPROCYSPROGLY";
-    
-    // char dnaSeq[STRING_MAX];
-    // strcpy(dnaSeq,
-    //       "ATTGACAACCGCGTCCGCCGC"
-    //       );
-    // char protSeq[STRING_MAX];
-    // strcpy(protSeq,
-    //       "IDNRVR"
-    //       );
-    // start = clock();
-    // printf("Score: %d\n\n", six_frame(dnaSeq, protSeq));
-    // end = clock();
-    // time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
-    // printf("Run %d time taken: %f ms\n\n", i, time_taken);
-    return 0;
 }
