@@ -134,12 +134,15 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     return score;
 }
 
-int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
+int modded_three_frame(char* dnaSequence, char* proteinSequence, int start_I, int start_J, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
+    int max_val = -999;
+
+    max_val = calculateC(dnaSequence, proteinSequence, start_I, start_J, gep, gop, frameshift_penalty);
 
     // Matrix Filling
-    for(i = 0; i < N; i++) {
-        for(j = 1; j < M + 1; j++) {
+    for(i = N-1; i >= 0; i--) {
+        for(j = M; j > 0; j--) {
             // I[i][j] = calculateI(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             if (i < 4)
                 continue;
@@ -167,7 +170,6 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
     //     }
     // }
 
-    int max_val = -999;
     for(i = 0; i < N; i++) {
         for(j = 0; j < M + 1; j++) {
             max_val = C[i][j] > max_val ? C[i][j] : max_val;
@@ -187,7 +189,7 @@ void *three_frame_thread(void *arg) {
     int TI[N][M + 1], TD[N][M + 1], TC[N][M + 1];
     
     pthread_mutex_lock(&term_mutex);
-    data->score = modded_three_frame(data->dnaSequence, data->proteinSequence, data->N, data->M, I, D, C, TI, TD, TC, data->gep, data->gop, data->frameshift_penalty);
+    data->score = modded_three_frame(data->dnaSequence, data->proteinSequence, data->i, data->j, data->N, data->M, I, D, C, TI, TD, TC, data->gep, data->gop, data->frameshift_penalty);
     if(term_thread_id == -1) {
         term_thread_id = data->thread_id;
     }
