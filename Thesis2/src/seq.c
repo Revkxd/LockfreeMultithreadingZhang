@@ -33,7 +33,7 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence) {
     // NOTE: INFINITY is a double, just converted to int to save memory
     // Initialization
     for(j = 0; j < M + 1; j++) {
-        I[0][j] = -999;
+        I[j][0] = -999;
         D[0][j] = -999;
         D[2][j] = -999;
         D[3][j] = -999;
