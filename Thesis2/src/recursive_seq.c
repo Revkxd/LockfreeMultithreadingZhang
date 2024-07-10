@@ -73,10 +73,9 @@ int calculateI(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     if (ht_search(i, j, 1, &score)) {
         return score;
     }
-
     // Base case: if j is 0, return 0
-    if (i == 0 || j == 0) {
-        return 0;
+    if (j == 0) {
+        return -999;
     }
 
     // Recursive case for I matrix
@@ -90,10 +89,14 @@ int calculateD(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     if(ht_search(i, j, 2, &score)) {
         return score;
     }
-
     // Base case: if i is less than 4 or j is 0, return 0
     if (i < 4 || j == 0) {
-        return 0;
+        if (i != 1) {
+            return -999;
+        }
+        else {
+            return calculateC(dnaSequence, proteinSequence, 0, j, gep, gop, frameshift_penalty) - gop - gep;
+        }
     }
 
     // Recursive case for D matrix
@@ -107,10 +110,38 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     if (ht_search(i, j, 3, &score)) {
         return score;
     }
-
     // Base case: if i or j is 0, return 0
     if (i == 0 || j == 0) {
+        ht_insert(i, j, 3, 0);
         return 0;
+    }
+    else if (i == 1 && j > 0) {
+        score = max_of_three(
+            calculateI(dnaSequence, proteinSequence, 1, j, gep, gop, frameshift_penalty),
+            calculateD(dnaSequence, proteinSequence, 1, j, gep, gop, frameshift_penalty),
+            calculateC(dnaSequence, proteinSequence, 0, j-1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 1))
+        );
+        score = score < 0 ? 0 : score;
+        ht_insert(i, j, 3, score);
+        return score;
+    }
+    else if (i == 2 && j > 0) {
+        score = max_of_two(
+            calculateI(dnaSequence, proteinSequence, 2, j, gep, gop, frameshift_penalty),
+            calculateC(dnaSequence, proteinSequence, 0, j-1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 2)) - frameshift_penalty
+        );
+        score = score < 0 ? 0 : score;
+        ht_insert(i, j, 3, score);
+        return score;
+    }
+    else if (i == 3 && j > 0) {
+        score = max_of_two(
+            calculateI(dnaSequence, proteinSequence, 3, j, gep, gop, frameshift_penalty),
+            calculateC(dnaSequence, proteinSequence, 1, j-1, gep, gop, frameshift_penalty) + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, 3)) - frameshift_penalty
+        );
+        score = score < 0 ? 0 : score;
+        ht_insert(i, j, 3, score);
+        return score;
     }
 
     // Recursive cases for C matrix

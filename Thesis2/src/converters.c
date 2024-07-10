@@ -12,6 +12,8 @@
 #define DEBUG 1
 #undef DEBUG
 
+#define MAXCOLS 3001
+
 int letter_to_blosum_index(char letter) {
     switch(letter) {
         case 'A': return 0;
@@ -83,7 +85,7 @@ int get_score(char amino_acid1, char amino_acid2) {
     return BLOSUM62[index1][index2];
 }
 
-void print_matrix(int rows, int cols, int matrix[][cols]) {
+void print_matrix(int rows, int cols, int matrix[][MAXCOLS]) {
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             printf("%4d ", matrix[i][j]);
@@ -127,6 +129,7 @@ void dna_complement(char* dnaSequence) {
 void reverse_complement(char* dnaSequence) {
     str_reverse(dnaSequence);
     dna_complement(dnaSequence);
+    printf("Reverse complement: %s\n", dnaSequence);
 }
 
 #ifdef DEBUG
