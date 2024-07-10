@@ -165,11 +165,11 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, i
     int i, j;
     int max_val = -999;
 
-    matrixInitialize(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
+    // matrixInitialize(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
 
     // Matrix Filling
-    for(i = 0; i < N; i++) {
-        for(j = 1; j < M + 1; j++) {
+    for(i = N-1; i >= 0; i--) {
+        for(j = M; j > 0; j--) {
             // I[i][j] = calculateI(dnaSequence, proteinSequence, i, j, gep, gop, frameshift_penalty);
             if (i < 4)
                 continue;
