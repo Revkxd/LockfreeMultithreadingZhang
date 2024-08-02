@@ -5,17 +5,158 @@
 #include <math.h>
 #include <time.h>
 
-#include "maxfunctions.c"
-#include "converters.c"
-
+#include "constants.h"
+#include "converters.h"
+#include "tables.h"
 #define PRINTERS 1
-// #undef PRINTERS
+#undef PRINTERS
 
 #define MAXROWS 3001
+#define MAXCOLS 3001
 // #define MAXCOLS 3001 DEFINED IN CONVERTERS
 static int gep = 2, gop = 3, frameshift_penalty = 4;
 static int ninf = -999;
 static int v1, v2, v3, v4, v5;
+
+
+int letter_to_blosum_index(char letter) {
+    switch(letter) {
+        case 'A': return 0;
+        case 'R': return 1;
+        case 'N': return 2;
+        case 'D': return 3;
+        case 'C': return 4;
+        case 'Q': return 5;
+        case 'E': return 6;
+        case 'G': return 7;
+        case 'H': return 8;
+        case 'I': return 9;
+        case 'L': return 10;
+        case 'K': return 11;
+        case 'M': return 12;
+        case 'F': return 13;
+        case 'P': return 14;
+        case 'S': return 15;
+        case 'T': return 16;
+        case 'W': return 17;
+        case 'Y': return 18;
+        case 'V': return 19;
+        case 'B': return 20;
+        case 'Z': return 21;
+        case 'X': return 22;
+        case '*': return 23;
+        default: return -1;
+    }
+}
+
+char* get_codon(char* dnaSequence, int index) {
+    char* codon = (char*) malloc(CODON_LENGTH + 1);
+    strncpy(codon, dnaSequence + index, CODON_LENGTH);
+    codon[CODON_LENGTH] = '\0';
+    return codon;
+}
+
+char translate_codon(char *codon) {
+    int i;
+    for(i = 0; i < CODON_TABLE_SIZE; i++) {
+        if(strcmp(codon, CODON_TABLE[i].codon) == 0) {
+            return CODON_TABLE[i].amino_acid;
+        }
+    }
+    return '0';
+}
+
+char get_translated_codon(char* dnaSequence, int index) {
+    #if DEBUG
+    char* codon = get_codon(dnaSequence, index);
+    #else
+    char* codon = get_codon(dnaSequence, index-1);
+    #endif
+    char amino_acid = translate_codon(codon);
+    #if DEBUG
+    printf("%s, %c\n", codon, amino_acid);
+    #endif
+    free(codon);
+    return amino_acid;
+}
+
+int get_score(char amino_acid1, char amino_acid2) {
+    if(amino_acid1 == '-' || amino_acid2 == '-')
+        return -999;
+    int index1 = letter_to_blosum_index(amino_acid1);
+    int index2 = letter_to_blosum_index(amino_acid2);
+    if(index1 == -1 || index2 == -1)
+        return -999;
+    return BLOSUM62[index1][index2];
+}
+
+void print_matrix(int rows, int cols, int matrix[][MAXCOLS]) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            printf("%4d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void str_reverse(char* str) {
+    int length = strlen(str);
+
+    for (int i = 0, j = length - 1; i < j; ++i, --j) {
+        char temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+    }
+}
+
+void dna_complement(char* dnaSequence) {
+    int length = strlen(dnaSequence);
+
+    for (int i = 0; i < length; ++i) {
+        switch (dnaSequence[i]) {
+            case 'A':
+                dnaSequence[i] = 'T';
+                break;
+            case 'T':
+                dnaSequence[i] = 'A';
+                break;
+            case 'C':
+                dnaSequence[i] = 'G';
+                break;
+            case 'G':
+                dnaSequence[i] = 'C';
+                break;
+        }
+    }
+}
+
+void reverse_complement(char* dnaSequence) {
+    str_reverse(dnaSequence);
+    dna_complement(dnaSequence);
+    printf("Reverse complement: %s\n", dnaSequence);
+}
+
+int max_of_two(int a, int b) {
+    return a > b ? a : b;
+}
+
+int max_of_three(int a, int b, int c) {
+    int temp = a > b ? a : b;
+    return temp > c ? temp : c;
+}
+
+int max_of_four(int a, int b, int c, int d) {
+    int temp1 = a > b ? a : b;
+    int temp2 = c > d ? c : d;
+    return temp1 > temp2 ? temp1 : temp2;
+}
+
+int max_of_five(int a, int b, int c, int d, int e) {
+    int temp1 = max_of_three(a, b, c);
+    int temp2 = max_of_two(d, e);
+    return temp1 > temp2 ? temp1 : temp2;
+}
 
 int I_matrix(int i, int j, int(*I)[MAXCOLS], int(*C)[MAXCOLS]) {
     if (j == 0) {
@@ -129,25 +270,6 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence) {
             fill_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence, &maxScore);
         }
     }
-    // Traceback Matrix Filling (ignore this first.)
-    // for(i = 0; i < N; i++) {
-    //     for(j = 0; j < M; j++) {
-    //         TI[i][j] = I[i][j] == I[i][j-1] - gep ? 0 : (I[i][j] == C[i][j-1] - gop - gep ? 1 : -999);
-    //         TD[i][j] = D[i][j] == D[i-3][j] - gep ? 0 : (D[i][j] == C[i-3][j] - gop - gep ? 1 : -999);
-    //         if(C[i][j] == I[i][j])
-    //             TC[i][j] = -2;
-    //         else if(C[i][j] == D[i][j])
-    //             TC[i][j] = -1;
-    //         else if(C[i][j] == C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
-    //             TC[i][j] = 2;
-    //         else if(C[i][j] == C[i-3][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)))
-    //             TC[i][j] = 3;
-    //         else if(C[i][j] == C[i-4][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty)
-    //             TC[i][j] = 4;
-    //         else
-    //             TC[i][j] = 0;
-    //     }
-    // }
 
     // Print the matrices for debugging
     #ifdef PRINTERS
@@ -157,12 +279,6 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence) {
     print_matrix(N, M + 1, D);
     printf("C Matrix:\n");
     print_matrix(N, M + 1, C);
-    // printf("TI Matrix:\n");
-    // print_matrix(N, M + 1, TI);
-    // printf("TD Matrix:\n");
-    // print_matrix(N, M + 1, TD);
-    // printf("TC Matrix:\n");
-    // print_matrix(N, M + 1, TC);
     #endif
 
     int max_val = -999;
@@ -191,4 +307,28 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     max2 = modded_three_frame(dnaSequence, proteinSequence);
 
     return max_of_two(max1, max2);
+}
+
+int main(int argc, char *argv[]) {
+    // Check if the correct number of command-line arguments is provided
+    if (argc != 3) {
+        printf("Usage: %s <arg1> <arg2>\n", argv[0]);
+        return 1; // Return an error code
+    }
+
+    int score;
+
+    double time_taken, start, end;
+
+    char *dna = argv[1];
+    char *protein = argv[2];
+    printf("DNA Sequence: %s\n", dna);
+    printf("Protein Sequence: %s\n", protein);
+    start = clock();
+    printf("Score: %d\n\n", six_frame(dna, protein));
+    end = clock();
+    time_taken = (double)(end - start)*1e3 / CLOCKS_PER_SEC;
+    printf("Run time taken: %f ms\n\n", time_taken);
+
+    return 0;
 }
