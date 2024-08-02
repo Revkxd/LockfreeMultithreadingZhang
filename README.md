@@ -10,7 +10,7 @@ This is an exploratory study aimed at exploring a new implementation approach fo
 - Kalaw, Stacy Selena (stacy_selena_kalaw@dlsu.edu.ph)
 - Meneses, Alyssa (alyssa_meneses@dlsu.edu.ph)
 - Sy, Richard (richard_t_sy@dlsu.edu.ph)
-- Yu, Cedric Leopold L. (cedric_leopold_yu@dlsu.edu.ph)
+- Yu, Cedric Leopold (cedric_leopold_yu@dlsu.edu.ph)
 
 # Relevant Files Information (under Thesis2/src folder)
 # Main Files (dynamic programming algorithm codes)
