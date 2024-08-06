@@ -346,7 +346,7 @@ int calculateC(char* dnaSequence, char* proteinSequence, int i, int j, int gep, 
     return score;
 }
 
-int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int I[][M+1], int D[][M+1], int C[][M+1], int TI[][M+1], int TD[][M+1], int TC[][M+1], int gep, int gop, int frameshift_penalty) {
+int modded_three_frame(char* dnaSequence, char* proteinSequence, int N, int M, int C[][M+1], int gep, int gop, int frameshift_penalty) {
     int i, j;
     int max_val = -999;
 
@@ -380,14 +380,14 @@ int six_frame(char* dnaSequence, char* proteinSequence) {
     printf("First Run:\n");
     #endif
     init_hash_table();
-    max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
+    max1 = modded_three_frame(dnaSequence, proteinSequence, N, M, C, gep, gop, frameshift_penalty);
 
     #ifdef PRINTERS
     printf("Reverse Complement:\n");
     #endif
     init_hash_table();
     reverse_complement(dnaSequence);
-    max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, I, D, C, TI, TD, TC, gep, gop, frameshift_penalty);
+    max2 = modded_three_frame(dnaSequence, proteinSequence, N, M, C, gep, gop, frameshift_penalty);
 
     return max_of_two(max1, max2);
 }
