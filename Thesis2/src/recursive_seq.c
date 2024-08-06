@@ -10,7 +10,6 @@
 #include "tables.h"
 #include <stdbool.h>
 #include <stdatomic.h>
-#include "atomicdefs.h"
 
 #define TABLE_SIZE 500000
 
