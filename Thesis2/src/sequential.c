@@ -182,7 +182,7 @@ int D_matrix(int i, int j, int(*D)[MAXCOLS], int(*C)[MAXCOLS]) {
     }
 }
 
-void init_C_matrix(int i, int j, int(*I)[MAXCOLS], int(*D)[MAXCOLS], int(*C)[MAXCOLS], char* dnaSequence, char* proteinSequence, int *maxScore) {
+void init_C_matrix(int i, int j, int(*I)[MAXCOLS], int(*D)[MAXCOLS], int(*C)[MAXCOLS], char* dnaSequence, char* proteinSequence) {
     if ((i >= 0 && j == 0) || (i == 0 && j >= 0)) {
         C[i][j] = 0;
     }
@@ -214,7 +214,7 @@ void init_C_matrix(int i, int j, int(*I)[MAXCOLS], int(*D)[MAXCOLS], int(*C)[MAX
     }
 }
 
-void fill_C_matrix(int i, int j, int(*I)[MAXCOLS], int(*D)[MAXCOLS], int(*C)[MAXCOLS], char* dnaSequence, char* proteinSequence, int *maxScore) {
+void fill_C_matrix(int i, int j, int(*I)[MAXCOLS], int(*D)[MAXCOLS], int(*C)[MAXCOLS], char* dnaSequence, char* proteinSequence) {
     v1 = I[i][j];
     v2 = D[i][j];
     v3 = C[i-2][j-1] + get_score(proteinSequence[j - 1], get_translated_codon(dnaSequence, i)) - frameshift_penalty;
@@ -251,14 +251,14 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence) {
     for(i = 0 ; i < N; i++) {
         I[i][j] = I_matrix(i, j, I, C);
         D[i][j] = D_matrix(i, j, D, C);
-        init_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence, &maxScore);
+        init_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence);
     }
 
     for(i = 0 ; i < 4; i++) {
         for(j = 1; j < M + 1; j++) {
             I[i][j] = I_matrix(i, j, I, C);
             D[i][j] = D_matrix(i, j, D, C);
-            init_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence, &maxScore);
+            init_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence);
         }
     }
 
@@ -267,7 +267,7 @@ int modded_three_frame(char* dnaSequence, char* proteinSequence) {
         for(j = 1; j < M + 1; j++) {
             I[i][j] = I_matrix(i, j, I, C);
             D[i][j] = D_matrix(i, j, D, C);
-            fill_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence, &maxScore);
+            fill_C_matrix(i, j, I, D, C, dnaSequence, proteinSequence);
         }
     }
 
