@@ -2,7 +2,7 @@
 // #include "recursive_seq.c"
 // #define ITER
 #ifdef ITER
-#include "remake.c"
+#include "sequential.c"
 #endif
 
 int main(int argc, char *argv[]) {
