@@ -24,6 +24,7 @@ void init_hash_table() {
     }
 }
 
+/* Retrieved from https://github.com/stivalaa/paralleldp */
 static unsigned long hash6432shift(unsigned long long key)
 {
   key = (~key) + (key << 18); /* key = (key << 18) - key - 1; */
