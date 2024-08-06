@@ -16,7 +16,7 @@ This is an exploratory study aimed at exploring a new implementation approach fo
 # Main Files (dynamic programming algorithm codes)
 - lockfreeseq.c -> Implementation of Multithreading (using pthread library) with lock-free hash table top-down version
 - recursive_seq.c -> Implementation of single-threaded top-down version
-- remake.c -> Latest, fixed version of `seq.c` which is the bottom-up implementation
+- sequential.c -> Latest, fixed version of `seq.c` which is the bottom-up implementation
 - seq.c -> Old, wrong implementation, ignore this file.
 
 # Helper Files
