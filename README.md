@@ -13,13 +13,13 @@ This is an exploratory study aimed at exploring a new implementation approach fo
 - Yu, Cedric Leopold (cedric_leopold_yu@dlsu.edu.ph)
 
 # Relevant Files Information (under Thesis2/src folder)
-# Main Files (dynamic programming algorithm codes)
+## Main Files (dynamic programming algorithm codes)
 - lockfreeseq.c -> Implementation of Multithreading (using pthread library) with lock-free hash table top-down version
 - recursive_seq.c -> Implementation of single-threaded top-down version
 - sequential.c -> Latest, fixed version of `seq.c` which is the bottom-up implementation
 - seq.c -> Old, wrong implementation, ignore this file.
 
-# Helper Files
+## Helper Files
 - constants.h -> constants definitions and some extra user defined data types are stored here
 - tables.h -> Stores the codon translation table and blosum62 scoring matrix
 - maxfunctions.c -> function implementations of `max()` function to allow for different argument counts
@@ -37,3 +37,8 @@ This is an exploratory study aimed at exploring a new implementation approach fo
 
 # Repository Sources
 - [Lockfree Hash Table](https://github.com/stivalaa/paralleldp)
+
+# Side Notes
+- Makefile is not configured properly since the usage was dropped early into the development
+- The main files are crammed with all the functions to have proper debug outputs which could've been avoided if a Makefile was configured
+- Most of the execution for tests were done on Google Colab which is why the Makefile was dropped to have easier code migration to Colab after finishing coding
